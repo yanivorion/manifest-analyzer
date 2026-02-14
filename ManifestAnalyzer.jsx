@@ -1,0 +1,2112 @@
+
+const MANIFEST = {
+  "type": "Tools.ManifestAnalyzer",
+  "description": "Analyzes Wix editor component manifest JSON files and displays all properties each component declares — data, elements, actions, cssProperties, cssCustomProperties, layout, states, presets, interactions, displayGroups, and more — organized in an elegant expandable table with search and filtering.",
+  "editorElement": {
+    "selector": ".manifest-analyzer",
+    "displayName": "Manifest Component Analyzer",
+    "archetype": "container",
+    "data": {
+      "title": {
+        "dataType": "text",
+        "displayName": "Title",
+        "defaultValue": "Manifest Component Analyzer",
+        "group": "Content"
+      },
+      "showSearch": {
+        "dataType": "booleanValue",
+        "displayName": "Show Search",
+        "defaultValue": "true",
+        "group": "Content"
+      },
+      "showStats": {
+        "dataType": "booleanValue",
+        "displayName": "Show Stats Bar",
+        "defaultValue": "true",
+        "group": "Content"
+      },
+      "emptyMessage": {
+        "dataType": "text",
+        "displayName": "Empty State Message",
+        "defaultValue": "Load a manifest JSON file to analyze component properties.",
+        "group": "Content"
+      },
+      "backgroundColor": {
+        "dataType": "color",
+        "displayName": "Page Background",
+        "defaultValue": "#F8F9FA",
+        "group": "Colors"
+      },
+      "surfaceColor": {
+        "dataType": "color",
+        "displayName": "Surface / Card",
+        "defaultValue": "#FFFFFF",
+        "group": "Colors"
+      },
+      "headerBgColor": {
+        "dataType": "color",
+        "displayName": "Table Header Background",
+        "defaultValue": "#F1F3F5",
+        "group": "Colors"
+      },
+      "textColor": {
+        "dataType": "color",
+        "displayName": "Primary Text",
+        "defaultValue": "#212529",
+        "group": "Colors"
+      },
+      "secondaryTextColor": {
+        "dataType": "color",
+        "displayName": "Secondary Text",
+        "defaultValue": "#495057",
+        "group": "Colors"
+      },
+      "mutedTextColor": {
+        "dataType": "color",
+        "displayName": "Muted Text",
+        "defaultValue": "#6C757D",
+        "group": "Colors"
+      },
+      "borderColor": {
+        "dataType": "color",
+        "displayName": "Borders",
+        "defaultValue": "#E9ECEF",
+        "group": "Colors"
+      },
+      "hoverColor": {
+        "dataType": "color",
+        "displayName": "Row Hover",
+        "defaultValue": "#F1F3F5",
+        "group": "Colors"
+      },
+      "accentColor": {
+        "dataType": "color",
+        "displayName": "Accent / Buttons",
+        "defaultValue": "#212529",
+        "group": "Colors"
+      },
+      "tagBgColor": {
+        "dataType": "color",
+        "displayName": "Property Tag Background",
+        "defaultValue": "#F1F3F5",
+        "group": "Colors"
+      },
+      "tagTextColor": {
+        "dataType": "color",
+        "displayName": "Property Tag Text",
+        "defaultValue": "#495057",
+        "group": "Colors"
+      },
+      "expandedBgColor": {
+        "dataType": "color",
+        "displayName": "Expanded Detail Background",
+        "defaultValue": "#F8F9FA",
+        "group": "Colors"
+      },
+      "sectionTitleColor": {
+        "dataType": "color",
+        "displayName": "Section Title Color",
+        "defaultValue": "#343A40",
+        "group": "Colors"
+      },
+      "fontSize": {
+        "dataType": "select",
+        "displayName": "Body Font Size (px)",
+        "defaultValue": "14",
+        "options": ["12", "13", "14", "16"],
+        "group": "Typography"
+      },
+      "headerFontSize": {
+        "dataType": "select",
+        "displayName": "Header Font Size (px)",
+        "defaultValue": "13",
+        "options": ["12", "13", "14", "16"],
+        "group": "Typography"
+      },
+      "titleFontSize": {
+        "dataType": "select",
+        "displayName": "Page Title Size (px)",
+        "defaultValue": "20",
+        "options": ["16", "18", "20", "24", "28"],
+        "group": "Typography"
+      },
+      "fontWeight": {
+        "dataType": "select",
+        "displayName": "Body Font Weight",
+        "defaultValue": "300",
+        "options": ["300", "400", "500"],
+        "group": "Typography"
+      },
+      "headerFontWeight": {
+        "dataType": "select",
+        "displayName": "Header Font Weight",
+        "defaultValue": "400",
+        "options": ["300", "400", "500"],
+        "group": "Typography"
+      },
+      "cellPadding": {
+        "dataType": "select",
+        "displayName": "Cell Padding (px)",
+        "defaultValue": "12",
+        "options": ["8", "10", "12", "16"],
+        "group": "Layout"
+      },
+      "borderRadius": {
+        "dataType": "select",
+        "displayName": "Corner Radius (px)",
+        "defaultValue": "6",
+        "options": ["0", "4", "6", "8", "12"],
+        "group": "Layout"
+      }
+    },
+    "layout": {
+      "resizeDirection": "horizontalAndVertical",
+      "contentResizeDirection": "vertical"
+    }
+  }
+};
+
+const AUDIT_DATA = [
+  { name: 'Social Bar', group: '', responsive: 'Scale proportionally, Fixed', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Share Buttons', group: '', responsive: 'Relative width, Fixed', overflow: 'Wrapping', hasText: 'Yes', comments: '' },
+  { name: 'Styled Buttons', group: '', responsive: 'Relative width, Fixed', overflow: 'Elipsis', hasText: 'Yes', comments: '' },
+  { name: 'Basic Buttons', group: '', responsive: 'Scale proportionally, Relative width, Fixed', overflow: 'Wrapping', hasText: 'Yes', comments: '' },
+  { name: 'Empty Containers', group: 'Container', responsive: 'Scale proportionally, Relative width, Fixed, Stretch', overflow: 'Show / Hide / Scroll content', hasText: 'No', comments: 'Scroll not working. RW not working if container is a circle' },
+  { name: 'Text', group: '', responsive: 'Scale proportionally, Custom scale, Wrap, Fixed, Map', overflow: 'Wrapping', hasText: 'Yes', comments: 'Scroll not working. RW not working if container is a circle' },
+  { name: 'Collapsible Text', group: '', responsive: 'Relative width, Fixed', overflow: 'Wrapping', hasText: 'Yes', comments: '' },
+  { name: 'Text Mask', group: '', responsive: 'Relative width, Fixed', overflow: 'Shrinking to 0px', hasText: 'No', comments: 'Not an actual text' },
+  { name: 'Basic Shapes', group: '', responsive: 'Scale proportionally, Relative width, Fixed', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Horizontal Line', group: '', responsive: 'Relative width, Fixed width, Stretch', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Vertical Line', group: '', responsive: 'Custom height, Fixed height, Stretch', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Vector Art', group: '', responsive: 'Scale proportionally, Relative width, Fixed', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Embed Site / Code', group: '', responsive: 'Scale proportionally, Relative width, Fixed, Stretch', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Custom Element', group: '', responsive: 'Relative width, Fixed', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Lottie Animation', group: '', responsive: 'Scale proportionally, Fixed', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Contact Form', group: '', responsive: 'Mixed, Relative width, Fixed, Stretch', overflow: 'RW > Cut', hasText: 'Yes', comments: 'Cannot edit nested components on stage - only in composer. Cannot change responsive behavior for each of nested - Only for parent' },
+  { name: 'Subscribe', group: '', responsive: 'Mixed, Relative width, Fixed, Stretch', overflow: 'RW > Cut', hasText: 'Yes', comments: 'Cannot edit nested components on stage - only in composer. Cannot change responsive behavior for each of nested - Only for parent' },
+  { name: 'Order Form', group: '', responsive: 'Mixed, Relative width, Fixed, Stretch', overflow: 'RW > Fixed', hasText: 'Yes', comments: 'Can set different responsive behavior for each field' },
+  { name: 'Google Maps', group: '', responsive: 'Scale proportionally, Relative width, Fixed, Stretch', overflow: '', hasText: 'No', comments: '' },
+  { name: 'Horizontal Menu', group: '', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Vertical Menu', group: '', responsive: 'Relative width, Fixed', overflow: 'Elipsis', hasText: 'Yes', comments: '' },
+  { name: 'Anchor Menu', group: '', responsive: 'Relative width, Fixed', overflow: 'No', hasText: 'No', comments: '' },
+  { name: 'Hamburger Menu', group: '', responsive: 'Fixed', overflow: 'Shrinking to 0px', hasText: 'Yes', comments: '' },
+  { name: 'Breadcrumbs', group: '', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: 'Cannot see difference between modes' },
+  { name: 'Site Search', group: '', responsive: 'Relative width, Fixed', overflow: 'Elipsis', hasText: 'Yes', comments: 'Cannot see difference between modes' },
+  { name: 'Single Image', group: '', responsive: 'Scale proportionally, Relative width, Fixed', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Pro Gallery', group: '', responsive: 'Scale proportionally, Fixed', overflow: 'Responsive', hasText: 'Yes', comments: '' },
+  { name: 'Single Video Player', group: '', responsive: 'Scale proportionally, Fixed', overflow: '', hasText: 'No', comments: '' },
+  { name: 'Video Box', group: '', responsive: 'Scale proportionally, Fixed', overflow: '', hasText: 'No', comments: '' },
+  { name: 'Transparent Video', group: '', responsive: 'Scale proportionally, Fixed', overflow: '', hasText: 'No', comments: '' },
+  { name: 'Audio Player', group: '', responsive: 'Relative width, Fixed', overflow: 'Elipsis > Cut', hasText: 'Yes', comments: '' },
+  { name: 'Section Grids', group: 'Layout Tool', responsive: 'Scale proportionally, Fixed size, Fill container', overflow: 'None', hasText: 'No', comments: '' },
+  { name: 'Flexbox', group: 'Layout Tool', responsive: 'Fill to distribute, Stretch, Custom height', overflow: 'Shrinking to 0px', hasText: 'No', comments: '' },
+  { name: 'Repeaters', group: 'Layout Tool', responsive: 'Fill equally to parent, Custom size', overflow: 'None', hasText: 'No', comments: '' },
+  { name: 'CSS Grid', group: 'Layout Tool', responsive: 'Scale proportionally, Relative width, Fixed, Stretch', overflow: 'None', hasText: 'No', comments: '' },
+  { name: 'Lightbox', group: 'Layout Tool', responsive: 'Relative width, Fixed', overflow: 'None', hasText: 'No', comments: '' },
+  { name: 'Slideshow Repeaters', group: 'Layout Tool', responsive: 'Scale proportionally, Fixed height, Fill content', overflow: 'None', hasText: 'No', comments: '' },
+  { name: 'Tabs', group: 'Layout Tool', responsive: 'Relative width, Fixed, Stretch', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Accordion', group: 'Layout Tool', responsive: 'Relative width, Fixed, Stretch', overflow: 'Wrap', hasText: 'Yes', comments: '' },
+  { name: 'Text Input', group: 'Form', responsive: 'Scale proportionally, Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Slider', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Toggle', group: 'Form', responsive: 'Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Checkbox', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Radio Button', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'File Upload', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Dropdown', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Date Picker', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Time Picker', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Rich Text Input', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Rating', group: 'Form', responsive: 'Fixed', overflow: '', hasText: 'No', comments: '' },
+  { name: 'Address Input', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Signature Input', group: 'Form', responsive: 'Relative width, Fixed', overflow: '', hasText: 'No', comments: '' },
+  { name: 'Captcha', group: 'Form', responsive: 'Fixed', overflow: '', hasText: 'No', comments: '' },
+  { name: 'Progress Bar', group: '', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: '' },
+  { name: 'Pagination', group: '', responsive: 'Relative width, Fixed', overflow: '', hasText: 'Yes', comments: 'Shrinks as expected' },
+];
+
+
+function Component({ config = {} }) {
+
+  const title = config?.title || 'Manifest Component Analyzer';
+  const showSearch = config?.showSearch !== false;
+  const showStats = config?.showStats !== false;
+  const emptyMessage = config?.emptyMessage || 'Load a manifest JSON file to analyze component properties.';
+
+  const backgroundColor = config?.backgroundColor || '#F8F9FA';
+  const surfaceColor = config?.surfaceColor || '#FFFFFF';
+  const headerBgColor = config?.headerBgColor || '#F1F3F5';
+  const textColor = config?.textColor || '#212529';
+  const secondaryTextColor = config?.secondaryTextColor || '#495057';
+  const mutedTextColor = config?.mutedTextColor || '#6C757D';
+  const borderColor = config?.borderColor || '#E9ECEF';
+  const hoverColor = config?.hoverColor || '#F1F3F5';
+  const accentColor = config?.accentColor || '#212529';
+  const tagBgColor = config?.tagBgColor || '#F1F3F5';
+  const tagTextColor = config?.tagTextColor || '#495057';
+  const expandedBgColor = config?.expandedBgColor || '#F8F9FA';
+  const sectionTitleColor = config?.sectionTitleColor || '#343A40';
+
+  const fontSize = parseInt(config?.fontSize || '14', 10);
+  const headerFontSize = parseInt(config?.headerFontSize || '13', 10);
+  const titleFontSize = parseInt(config?.titleFontSize || '20', 10);
+  const fontWeight = config?.fontWeight || '300';
+  const headerFontWeight = config?.headerFontWeight || '400';
+  const cellPadding = parseInt(config?.cellPadding || '12', 10);
+  const borderRadius = parseInt(config?.borderRadius || '6', 10);
+
+  const prefersReducedMotion = typeof window !== 'undefined'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+
+  const [activeTab, setActiveTab] = React.useState('manifest');
+  const [manifestData, setManifestData] = React.useState(null);
+  const [manifestFilters, setManifestFilters] = React.useState({ id: '', extensionType: '', displayName: [], sections: '' });
+  const [showDisplayNameDD, setShowDisplayNameDD] = React.useState(false);
+  const [displayNameSearch, setDisplayNameSearch] = React.useState('');
+  const displayNameDDRef = React.useRef(null);
+  const displayNameBtnRef = React.useRef(null);
+  const [ddPos, setDdPos] = React.useState({ top: 0, left: 0, width: 0 });
+
+
+  const [expandedRows, setExpandedRows] = React.useState(new Set());
+  const [fileName, setFileName] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [auditFilters, setAuditFilters] = React.useState({ name: '', group: '', responsive: '', overflow: '', hasText: '', comments: '' });
+
+  const [sizingData, setSizingData] = React.useState([]);
+  const sizingColDefs = React.useMemo(() => [
+    { key: 'component', label: 'Component', type: 'text', minW: '160px' },
+    { key: 'package', label: 'Package', type: 'dropdown', minW: '140px' },
+    { key: 'mode', label: 'Mode', type: 'dropdown', minW: '100px' },
+    { key: 'width', label: 'Width', type: 'dropdown', minW: '80px' },
+    { key: 'height', label: 'Height', type: 'dropdown', minW: '80px' },
+    { key: 'minW', label: 'Min W', type: 'dropdown', minW: '80px' },
+    { key: 'minH', label: 'Min H', type: 'dropdown', minW: '80px' },
+    { key: 'maxW', label: 'Max W', type: 'dropdown', minW: '80px' },
+    { key: 'maxH', label: 'Max H', type: 'dropdown', minW: '80px' },
+    { key: 'scaleSize', label: 'Scale Size', type: 'dropdown', minW: '80px' },
+    { key: 'container', label: 'Container', type: 'dropdown', minW: '80px' },
+    { key: 'type', label: 'Type', type: 'dropdown', minW: '100px' },
+    { key: 'contentResizeDir', label: 'Resize Dir', type: 'dropdown', minW: '90px' },
+    { key: 'padding', label: 'Padding', type: 'dropdown', minW: '80px' },
+    { key: 'spacing', label: 'Spacing', type: 'dropdown', minW: '80px' },
+    { key: 'gaps', label: 'Gaps', type: 'dropdown', minW: '80px' },
+    { key: 'scaleDesign', label: 'Scale Design', type: 'dropdown', minW: '90px' },
+    { key: 'fill', label: 'Fill', type: 'dropdown', minW: '80px' },
+    { key: 'borderWidth', label: 'Border', type: 'dropdown', minW: '80px' },
+    { key: 'cornerRadius', label: 'Corners', type: 'dropdown', minW: '80px' },
+    { key: 'shadow', label: 'Shadow', type: 'dropdown', minW: '80px' },
+    { key: 'innerPadding', label: 'Inner Pad', type: 'dropdown', minW: '80px' },
+    { key: 'scaleText', label: 'Scale Text', type: 'dropdown', minW: '80px' },
+    { key: 'fontSizeScale', label: 'Font Size', type: 'dropdown', minW: '80px' },
+    { key: 'ticket', label: 'Ticket', type: 'text', minW: '100px' },
+  ], []);
+  const defaultSizingFilters = React.useMemo(() => {
+    const f = {};
+    sizingColDefs.forEach(c => { f[c.key] = ''; });
+    return f;
+  }, [sizingColDefs]);
+  const [sizingFilters, setSizingFilters] = React.useState({});
+  const updateSizingFilter = React.useCallback((key, value) => {
+    setSizingFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const sizingUniques = React.useMemo(() => {
+    const map = {};
+    sizingColDefs.filter(c => c.type === 'dropdown').forEach(c => {
+      map[c.key] = [...new Set(sizingData.map(r => r[c.key]).filter(Boolean))].sort();
+    });
+    return map;
+  }, [sizingData, sizingColDefs]);
+
+  const filteredSizing = React.useMemo(() => {
+    return sizingData.filter(r => {
+      for (const col of sizingColDefs) {
+        const fv = sizingFilters[col.key];
+        if (!fv) continue;
+        if (col.type === 'text') {
+          if (!r[col.key].toLowerCase().includes(fv.toLowerCase())) return false;
+        } else {
+          if (r[col.key] !== fv) return false;
+        }
+      }
+      return true;
+    });
+  }, [sizingData, sizingFilters, sizingColDefs]);
+
+  const [propFilters, setPropFilters] = React.useState([]);
+  const [showPropPanel, setShowPropPanel] = React.useState(false);
+  const [propSearch, setPropSearch] = React.useState('');
+  const [openPropSections, setOpenPropSections] = React.useState(new Set());
+
+
+  const updateManifestFilter = React.useCallback((key, value) => {
+    setManifestFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+  const updateAuditFilter = React.useCallback((key, value) => {
+    setAuditFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const togglePropFilter = React.useCallback((filterKey) => {
+    setPropFilters(prev =>
+      prev.includes(filterKey) ? prev.filter(f => f !== filterKey) : [...prev, filterKey]
+    );
+  }, []);
+
+  const togglePropSection = React.useCallback((title) => {
+    setOpenPropSections(prev => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title); else next.add(title);
+      return next;
+    });
+  }, []);
+
+  const fileInputRef = React.useRef(null);
+
+
+  const auditUniqueGroups = React.useMemo(() => [...new Set(AUDIT_DATA.map(r => r.group).filter(Boolean))].sort(), []);
+  const auditUniqueHasText = React.useMemo(() => [...new Set(AUDIT_DATA.map(r => r.hasText).filter(Boolean))].sort(), []);
+
+  const filteredAudit = React.useMemo(() => {
+    return AUDIT_DATA.filter(r => {
+      if (auditFilters.name && !r.name.toLowerCase().includes(auditFilters.name.toLowerCase())) return false;
+      if (auditFilters.group && r.group !== auditFilters.group) return false;
+      if (auditFilters.responsive && !r.responsive.toLowerCase().includes(auditFilters.responsive.toLowerCase())) return false;
+      if (auditFilters.overflow && !r.overflow.toLowerCase().includes(auditFilters.overflow.toLowerCase())) return false;
+      if (auditFilters.hasText && r.hasText !== auditFilters.hasText) return false;
+      if (auditFilters.comments && !r.comments.toLowerCase().includes(auditFilters.comments.toLowerCase())) return false;
+      return true;
+    });
+  }, [auditFilters]);
+
+
+
+  React.useEffect(() => {
+    fetch('Full.json')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => { setManifestData(data); setFileName('Full.json'); })
+      .catch(() =>
+        fetch('manifest.json')
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(data => { setManifestData(data); setFileName('manifest.json'); })
+          .catch(() => {})
+      );
+    fetch('sizing_data.json')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setSizingData(data))
+      .catch(() => {});
+  }, []);
+
+
+  const handleFileLoad = React.useCallback((e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (typeof data !== 'object' || data === null) throw new Error('Root must be an object');
+        setManifestData(data);
+        setFileName(file.name);
+        setError('');
+        setExpandedRows(new Set());
+        setManifestFilters({ id: '', extensionType: '', displayName: [], sections: '' });
+        setPropFilters([]);
+      } catch (err) {
+
+        setError('Invalid JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  }, []);
+
+  const collectKeys = (obj) => {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return [];
+    return Object.keys(obj).sort();
+  };
+
+  const analyzeComponent = React.useCallback((compId, comp) => {
+    const manifest = comp?.manifest || {};
+    const editorEl = manifest?.editorElement || {};
+    const sections = [];
+
+    const overviewItems = [];
+    if (comp?.extensionType) overviewItems.push({ key: 'extensionType', value: comp.extensionType });
+    if (comp?.componentType) overviewItems.push({ key: 'componentType', value: comp.componentType });
+    if (manifest?.type) overviewItems.push({ key: 'manifest.type', value: manifest.type });
+    if (manifest?.description) overviewItems.push({ key: 'description', value: manifest.description, long: true });
+    if (comp?.metadata !== undefined) overviewItems.push({ key: 'metadata', value: comp.metadata === null ? 'null' : JSON.stringify(comp.metadata).slice(0, 80) });
+    if (overviewItems.length) sections.push({ title: 'Overview', icon: 'info', items: overviewItems });
+
+    const editorDirectItems = [];
+    Object.keys(editorEl).forEach(k => {
+      const v = editorEl[k];
+      if (v === null || typeof v !== 'object') {
+        editorDirectItems.push({ key: k, value: String(v) });
+      }
+    });
+    if (editorDirectItems.length) sections.push({ title: 'Editor Element', icon: 'edit', items: editorDirectItems });
+
+    const dataObj = editorEl?.data;
+    if (dataObj && typeof dataObj === 'object') {
+      const keys = Object.keys(dataObj);
+      if (keys.length) {
+        sections.push({
+          title: 'Data Properties',
+          icon: 'data',
+          count: keys.length,
+          items: keys.map(k => {
+            const prop = dataObj[k];
+            const parts = [];
+            if (prop?.dataType) parts.push(prop.dataType);
+            if (prop?.displayName) parts.push('"' + prop.displayName + '"');
+            if (prop?.deprecated) parts.push('deprecated');
+            if (prop?.group) parts.push('group:' + prop.group);
+            return { key: k, value: parts.join(' | ') };
+          })
+        });
+      }
+    }
+
+    const nestedSections = [
+      { key: 'elements', title: 'Elements', icon: 'layers' },
+      { key: 'actions', title: 'Actions', icon: 'zap' },
+      { key: 'customActions', title: 'Custom Actions', icon: 'zap' },
+      { key: 'cssProperties', title: 'CSS Properties', icon: 'palette' },
+      { key: 'cssCustomProperties', title: 'CSS Custom Properties', icon: 'palette' },
+      { key: 'layout', title: 'Layout', icon: 'layout' },
+      { key: 'states', title: 'States', icon: 'toggle' },
+      { key: 'interactions', title: 'Interactions', icon: 'mouse' },
+      { key: 'presets', title: 'Presets', icon: 'grid' },
+      { key: 'displayGroups', title: 'Display Groups', icon: 'folder' },
+      { key: 'displayFilters', title: 'Display Filters', icon: 'filter' },
+      { key: 'behaviors', title: 'Behaviors', icon: 'settings' },
+      { key: 'helpArticle', title: 'Help Article', icon: 'help' },
+    ];
+
+    nestedSections.forEach(({ key, title: secTitle, icon }) => {
+      const obj = editorEl?.[key];
+      if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+        const keys = Object.keys(obj);
+        if (keys.length) {
+          sections.push({
+            title: secTitle,
+            icon,
+            count: keys.length,
+            items: keys.map(k => {
+              const val = obj[k];
+              if (typeof val === 'object' && val !== null) {
+                const hint = val?.displayName || val?.dataType || val?.cssPropertyType || val?.elementType || val?.containerType || '';
+                return { key: k, value: hint };
+              }
+              return { key: k, value: String(val) };
+            })
+          });
+        }
+      } else if (Array.isArray(obj) && obj.length) {
+        sections.push({
+          title: secTitle,
+          icon,
+          count: obj.length,
+          items: obj.map((item, i) => ({
+            key: typeof item === 'string' ? item : '[' + i + ']',
+            value: typeof item === 'object' ? JSON.stringify(item).slice(0, 80) : String(item)
+          }))
+        });
+      }
+    });
+
+    if (manifest?.resources) {
+      const resKeys = Object.keys(manifest.resources);
+      if (resKeys.length) {
+        sections.push({
+          title: 'Resources',
+          icon: 'link',
+          count: resKeys.length,
+          items: resKeys.map(k => ({ key: k, value: '(configured)' }))
+        });
+      }
+    }
+
+    const badgeSections = sections.filter(s => s.count && s.count > 0);
+
+    return {
+      id: compId,
+      extensionType: comp?.extensionType || '',
+      displayName: editorEl?.displayName || manifest?.type || compId.split('.').pop(),
+      selector: editorEl?.selector || '',
+      description: manifest?.description || '',
+      archetype: editorEl?.archetype || '',
+      sections: sections.filter(s => s.items.length > 0),
+      badges: badgeSections,
+      totalProps: sections.reduce((sum, s) => sum + s.items.length, 0)
+    };
+  }, []);
+
+  const components = React.useMemo(() => {
+    if (!manifestData || typeof manifestData !== 'object') return [];
+    return Object.entries(manifestData).map(([id, comp]) => analyzeComponent(id, comp));
+  }, [manifestData, analyzeComponent]);
+
+  const manifestUniqueExtTypes = React.useMemo(() => [...new Set(components.map(c => c.extensionType).filter(Boolean))].sort(), [components]);
+  const manifestUniqueDisplayNames = React.useMemo(() => [...new Set(components.map(c => c.displayName).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })), [components]);
+
+  React.useEffect(() => {
+    if (!showDisplayNameDD) return;
+    const handler = (e) => {
+      if (displayNameDDRef.current && displayNameDDRef.current.contains(e.target)) return;
+      if (displayNameBtnRef.current && displayNameBtnRef.current.contains(e.target)) return;
+      setShowDisplayNameDD(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showDisplayNameDD]);
+
+  React.useEffect(() => {
+    if (showDisplayNameDD && displayNameBtnRef.current) {
+      const rect = displayNameBtnRef.current.getBoundingClientRect();
+      setDdPos({ top: rect.bottom + 2, left: rect.left, width: Math.max(rect.width, 220) });
+    }
+  }, [showDisplayNameDD]);
+
+
+
+  const allSectionProps = React.useMemo(() => {
+    const map = {};
+    components.forEach(comp => {
+      comp.sections.forEach(sec => {
+        if (!map[sec.title]) map[sec.title] = new Set();
+        sec.items.forEach(item => map[sec.title].add(item.key));
+      });
+    });
+    const result = {};
+    Object.keys(map).sort().forEach(title => {
+      result[title] = [...map[title]].sort();
+    });
+    return result;
+  }, [components]);
+
+  const allSectionTitles = React.useMemo(() => Object.keys(allSectionProps), [allSectionProps]);
+
+  const [patternSection, setPatternSection] = React.useState('');
+  const [patternSearch, setPatternSearch] = React.useState('');
+  const [patternMinGroup, setPatternMinGroup] = React.useState(2);
+
+  const patternGroups = React.useMemo(() => {
+    if (!components.length) return {};
+    const result = {};
+    const sectionsToAnalyze = patternSection ? [patternSection] : allSectionTitles;
+    sectionsToAnalyze.forEach(secTitle => {
+      const groups = {};
+      components.forEach(comp => {
+        const sec = comp.sections.find(s => s.title === secTitle);
+        if (!sec) return;
+        const keySignature = sec.items.map(i => i.key).sort().join('||');
+        if (!groups[keySignature]) {
+          groups[keySignature] = { keys: sec.items.map(i => i.key).sort(), components: [] };
+        }
+        groups[keySignature].components.push({ id: comp.id, displayName: comp.displayName });
+      });
+      const filtered = Object.values(groups).filter(g => g.components.length >= patternMinGroup);
+      if (filtered.length > 0) {
+        result[secTitle] = filtered.sort((a, b) => b.components.length - a.components.length);
+      }
+    });
+    return result;
+  }, [components, allSectionTitles, patternSection, patternMinGroup]);
+
+  const patternSectionTitles = React.useMemo(() => Object.keys(patternGroups).sort(), [patternGroups]);
+
+  const filteredPatternGroups = React.useMemo(() => {
+    if (!patternSearch.trim()) return patternGroups;
+    const term = patternSearch.toLowerCase();
+    const result = {};
+    Object.entries(patternGroups).forEach(([secTitle, groups]) => {
+      const fg = groups.filter(g =>
+        g.keys.some(k => k.toLowerCase().includes(term)) ||
+        g.components.some(c => c.displayName.toLowerCase().includes(term) || c.id.toLowerCase().includes(term)) ||
+        secTitle.toLowerCase().includes(term)
+      );
+      if (fg.length > 0) result[secTitle] = fg;
+    });
+    return result;
+  }, [patternGroups, patternSearch]);
+
+  /* ── Unified View: cross-reference sizing packages x layout patterns ── */
+  const [uniPackageFilter, setUniPackageFilter] = React.useState([]);
+  const [uniSectionFilter, setUniSectionFilter] = React.useState('Layout');
+  const [uniSearch, setUniSearch] = React.useState('');
+  const [uniExpandedComps, setUniExpandedComps] = React.useState(new Set());
+  const [uniExpandedGroups, setUniExpandedGroups] = React.useState(new Set());
+  const [uniCompact, setUniCompact] = React.useState(true); /* compact = show only layout values inline */
+
+  const normalize = React.useCallback((name) => {
+    if (!name) return '';
+    return name.toLowerCase()
+      .replace(/\s*\(.*?\)\s*/g, '')
+      .replace(/\s*-\s*(old|new).*$/i, '')
+      .replace(/[\s_-]+/g, ' ')
+      .replace(/\bstyleable\b/g, 'stylable')
+      .trim();
+  }, []);
+
+  const aliasMap = React.useMemo(() => ({
+    'running text': 'text marquee',
+    'shape / vector art': 'vector art',
+    'google map': 'google maps',
+    'share button': 'share buttons',
+    'html component': 'html element',
+    'single video player': 'video player',
+    'multi state box parent': 'multistatebox', 'multi state box child': 'multistatebox', 'multistate box': 'multistatebox',
+    'text effects': 'text effect',
+    'horizontal line': 'line', 'vertical line': 'line',
+    'lightbox': 'popup',
+    'stylable button': 'button', 'styleable button': 'button', 'site button': 'button',
+    'stylable horizontal menu': 'menu', 'expandable menu': 'menu', 'horizontal menu': 'menu',
+    'text input': 'textinput', 'textinput': 'textinput',
+    'text marquee': 'running text',
+    'text on path': 'text on path',
+    'text mask': 'text mask',
+    'horizontal section': 'section',
+    'popup container': 'popup', 'popup closeicon button': 'popup closeicon',
+    'lottie embed': 'lottie embed',
+    'upload button': 'upload button',
+    'play button': 'play button',
+    'toggle switch': 'toggle switch',
+    'rich text box': 'rich text box',
+    'horizontal stack': 'horizontal stack', 'vertical stack': 'vertical stack',
+  }), []);
+
+  const resolveAlias = React.useCallback((norm) => {
+    // Direct alias lookup
+    if (aliasMap[norm]) return aliasMap[norm];
+    // Try stripping common suffixes/prefixes for partial match
+    for (const [from, to] of Object.entries(aliasMap)) {
+      if (norm.startsWith(from + ' ') || norm.endsWith(' ' + from)) return to;
+    }
+    return norm;
+  }, [aliasMap]);
+
+
+  // Merge manifest + sizing into unified entries
+  const unifiedEntries = React.useMemo(() => {
+    const map = {};
+    const getOrCreate = (key, displayLabel) => {
+      if (!map[key]) map[key] = { key, label: displayLabel, manifest: [], sizing: [], sizingPackages: new Set(), sizingNames: new Set() };
+      return map[key];
+    };
+    // Build a reverse lookup: normalized name → key used in map, to help match sizing
+    const normalizedIndex = {};
+    components.forEach(comp => {
+      const resolved = resolveAlias(normalize(comp.displayName));
+      const entry = getOrCreate(resolved, comp.displayName);
+      entry.manifest.push(comp);
+      normalizedIndex[normalize(comp.displayName)] = resolved;
+      // Also index by component ID short name (e.g., "Button" from "wixEditorElements.Button")
+      const shortId = comp.id.split('.').pop().toLowerCase();
+      if (!normalizedIndex[shortId]) normalizedIndex[shortId] = resolved;
+    });
+    const sizingByComp = {};
+    sizingData.forEach(row => { if (!sizingByComp[row.component]) sizingByComp[row.component] = []; sizingByComp[row.component].push(row); });
+    Object.entries(sizingByComp).forEach(([name, rows]) => {
+      // Skip very long compound entries
+      if (name.includes(',') && name.length > 60) return;
+      const norm = normalize(name);
+      let resolved = resolveAlias(norm);
+      // If no direct match in map, try normalizedIndex for fuzzy match
+      if (!map[resolved] && normalizedIndex[norm]) resolved = normalizedIndex[norm];
+      if (!map[resolved] && normalizedIndex[resolved]) resolved = normalizedIndex[resolved];
+      const entry = getOrCreate(resolved, map[resolved]?.label || name);
+      entry.sizing = entry.sizing.concat(rows);
+      entry.sizingNames.add(name);
+      rows.forEach(r => { if (r.package) entry.sizingPackages.add(r.package); });
+    });
+    return Object.values(map);
+  }, [components, sizingData, normalize, resolveAlias]);
+
+
+  // All unique sizing packages for filter
+  const allSizingPackages = React.useMemo(() => {
+    const pkgs = new Set();
+    unifiedEntries.forEach(e => e.sizingPackages.forEach(p => pkgs.add(p)));
+    return [...pkgs].sort();
+  }, [unifiedEntries]);
+
+  // Cross-reference: filter by package, then group by shared layout pattern
+  const unifiedGroups = React.useMemo(() => {
+    const secToUse = uniSectionFilter || 'Layout';
+
+    // Step 1: filter entries that have the selected sizing packages
+    let pool = unifiedEntries;
+    if (uniPackageFilter.length > 0) {
+      pool = pool.filter(e => uniPackageFilter.some(pkg => e.sizingPackages.has(pkg)));
+    }
+    if (uniSearch) {
+      const term = uniSearch.toLowerCase();
+      pool = pool.filter(e =>
+        e.label.toLowerCase().includes(term) ||
+        e.manifest.some(c => c.id.toLowerCase().includes(term))
+      );
+    }
+
+    // Step 2: for each entry, get its property KEY signature + VALUES in the chosen section
+    const groups = {};
+    const noSection = [];
+    pool.forEach(entry => {
+      let signature = null;
+      let keys = [];
+      let valueMap = {}; // key → value for this entry's section props
+      entry.manifest.forEach(comp => {
+        const sec = comp.sections.find(s => s.title === secToUse);
+        if (sec) {
+          keys = sec.items.map(i => i.key).sort();
+          signature = keys.join('||');
+          sec.items.forEach(i => { valueMap[i.key] = i.value || ''; });
+        }
+      });
+      if (signature) {
+        if (!groups[signature]) groups[signature] = { keys, entries: [], valueMaps: [] };
+        groups[signature].entries.push(entry);
+        groups[signature].valueMaps.push(valueMap);
+      } else {
+        noSection.push(entry);
+      }
+    });
+
+    // For each group, compute which keys have differing values across entries
+    Object.values(groups).forEach(g => {
+      g.valueDiffs = {}; // key → { values: Set, hasDiff: bool }
+      g.keys.forEach(k => {
+        const vals = new Set(g.valueMaps.map(vm => vm[k] || ''));
+        g.valueDiffs[k] = { values: [...vals], hasDiff: vals.size > 1 };
+      });
+      g.hasSomeDiff = Object.values(g.valueDiffs).some(d => d.hasDiff);
+    });
+
+    // Sort groups by size desc, then build result
+    const sorted = Object.values(groups)
+      .filter(g => g.entries.length >= 1)
+      .sort((a, b) => b.entries.length - a.entries.length);
+
+    return { groups: sorted, ungrouped: noSection, total: pool.length };
+  }, [unifiedEntries, uniPackageFilter, uniSectionFilter, uniSearch]);
+
+  const toggleUniComp = React.useCallback((key) => {
+    setUniExpandedComps(prev => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+  }, []);
+  const toggleUniGroup = React.useCallback((idx) => {
+    setUniExpandedGroups(prev => { const n = new Set(prev); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; });
+  }, []);
+  const expandAllUniComps = React.useCallback(() => {
+    const keys = new Set();
+    unifiedGroups.groups.forEach((g, gi) => {
+      g.entries.forEach(e => { keys.add('g' + gi + '::' + e.key); });
+    });
+    unifiedGroups.groups.filter(g => g.entries.length === 1).forEach((g) => {
+      keys.add('unique::' + g.entries[0].key);
+    });
+    setUniExpandedComps(keys);
+  }, [unifiedGroups]);
+  const collapseAllUniComps = React.useCallback(() => {
+    setUniExpandedComps(new Set());
+  }, []);
+
+
+  const filtered = React.useMemo(() => {
+    return components.filter(c => {
+
+      if (manifestFilters.id && !c.id.toLowerCase().includes(manifestFilters.id.toLowerCase())) return false;
+      if (manifestFilters.extensionType && c.extensionType !== manifestFilters.extensionType) return false;
+      if (manifestFilters.displayName.length > 0 && !manifestFilters.displayName.includes(c.displayName)) return false;
+
+      if (manifestFilters.sections) {
+        const secTerm = manifestFilters.sections.toLowerCase();
+        const hasSec = c.badges.some(b => b.title.toLowerCase().includes(secTerm));
+        if (!hasSec) return false;
+      }
+      if (propFilters.length > 0) {
+        for (const filter of propFilters) {
+          const sepIdx = filter.indexOf('::');
+          const secTitle = filter.slice(0, sepIdx);
+          const propKey = filter.slice(sepIdx + 2);
+          const sec = c.sections.find(s => s.title === secTitle);
+          if (!sec || !sec.items.some(item => item.key === propKey)) return false;
+        }
+      }
+      return true;
+    });
+  }, [components, manifestFilters, propFilters]);
+
+
+
+  const toggleExpand = React.useCallback((compId) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(compId)) next.delete(compId);
+      else next.add(compId);
+      return next;
+    });
+  }, []);
+
+  const expandAll = React.useCallback(() => {
+    setExpandedRows(new Set(filtered.map(c => c.id)));
+  }, [filtered]);
+
+  const collapseAll = React.useCallback(() => {
+    setExpandedRows(new Set());
+  }, []);
+
+  const border = '1px solid ' + borderColor;
+  const transTime = prefersReducedMotion ? '0ms' : '200ms';
+
+  const btnBase = {
+    background: 'none',
+    border: '1px solid ' + borderColor,
+    cursor: 'pointer',
+    padding: '7px 14px',
+    borderRadius: (borderRadius + 2) + 'px',
+    fontSize: '13px',
+    fontWeight: '400',
+    color: secondaryTextColor,
+    transition: prefersReducedMotion ? 'none' : 'all 150ms ease-out',
+    lineHeight: '1.4',
+  };
+
+  const primaryBtn = {
+    ...btnBase,
+    backgroundColor: accentColor,
+    color: '#FFFFFF',
+    border: '1px solid ' + accentColor,
+    fontWeight: '400',
+  };
+
+  /* Shared input/select style for filters */
+  const inputStyle = {
+    padding: '6px 10px', fontSize: '12px', fontWeight: '300',
+    border: '1px solid ' + borderColor, borderRadius: (borderRadius + 2) + 'px',
+    outline: 'none', backgroundColor: surfaceColor, color: textColor,
+  };
+
+  const manifestEmpty = !manifestData;
+
+
+  return (
+    <div
+      className="manifest-analyzer"
+      style={{
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+        overflow: 'auto',
+        backgroundColor,
+        fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        fontSize: fontSize + 'px',
+        fontWeight,
+        color: textColor,
+      }}
+    >
+      {/* ── Dark header bar ── */}
+      <div style={{
+        backgroundColor: accentColor, color: '#FFFFFF', padding: '16px 28px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+          <h1 style={{ fontSize: titleFontSize + 'px', fontWeight: '400', letterSpacing: '-0.01em', margin: 0, color: '#FFFFFF' }}>
+            {title}
+          </h1>
+          {fileName && (
+            <span style={{ fontSize: '12px', color: '#ADB5BD', fontWeight: '300' }}>{fileName}</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              background: 'none', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer',
+              padding: '7px 16px', borderRadius: (borderRadius + 2) + 'px', fontSize: '13px', fontWeight: '400',
+              color: '#FFFFFF', transition: prefersReducedMotion ? 'none' : 'all 150ms ease-out', lineHeight: '1.4',
+            }}
+            aria-label="Load a different manifest JSON file"
+          >
+            Load JSON
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleFileLoad}
+            style={{ display: 'none' }}
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 28px 48px', color: textColor }}>
+
+        {/* ── Tab navigation ── */}
+        <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '1px solid ' + borderColor }}>
+          {[
+            { id: 'manifest', label: 'Manifest Analysis' },
+            { id: 'audit', label: 'Component Audit' },
+            { id: 'sizing', label: 'Sizing Inspector' },
+            { id: 'patterns', label: 'Pattern Analysis' },
+            { id: 'unified', label: 'Unified View' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                aria-selected={isActive}
+                role="tab"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: isActive ? '2px solid ' + accentColor : '2px solid transparent',
+                  padding: '10px 18px',
+                  fontSize: '13px',
+                  fontWeight: isActive ? '400' : '300',
+                  color: isActive ? textColor : mutedTextColor,
+                  cursor: 'pointer',
+                  letterSpacing: '0em',
+                  transition: prefersReducedMotion ? 'none' : 'all 250ms ease-out',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {error && <p style={{ fontSize: '12px', color: '#6C757D', marginBottom: '12px' }}>{error}</p>}
+
+
+        {activeTab === 'audit' && (
+          <div>
+            <div style={{ fontSize: '13px', color: mutedTextColor, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span>{filteredAudit.length} of {AUDIT_DATA.length} components</span>
+              {Object.values(auditFilters).some(v => v) && (
+                <button
+                  onClick={() => setAuditFilters({ name: '', group: '', responsive: '', overflow: '', hasText: '', comments: '' })}
+                  style={{ ...btnBase, padding: '4px 10px', fontSize: '12px' }}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+
+            <div style={{ backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <table role="grid" aria-label="Component audit table" style={{ width: '100%', borderCollapse: 'collapse', borderSpacing: 0, tableLayout: 'auto' }}>
+                <thead>
+                  <tr>
+                    {['Component Name', 'Group', 'Responsive Behavior', 'Overflow Behavior', 'Has Text', 'Comments'].map((col, ci) => (
+                      <th key={ci} style={{ padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none', fontSize: headerFontSize + 'px', fontWeight: headerFontWeight, color: secondaryTextColor, textAlign: 'left', whiteSpace: 'nowrap' }}>
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                      <input type="text" value={auditFilters.name} onChange={(e) => updateAuditFilter('name', e.target.value)} placeholder="Filter..." aria-label="Filter by component name" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400' }} />
+                    </th>
+                    <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                      <select value={auditFilters.group} onChange={(e) => updateAuditFilter('group', e.target.value)} aria-label="Filter by group" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400', cursor: 'pointer' }}>
+                        <option value="">All</option>
+                        {auditUniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </th>
+                    <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                      <input type="text" value={auditFilters.responsive} onChange={(e) => updateAuditFilter('responsive', e.target.value)} placeholder="Filter..." aria-label="Filter by responsive behavior" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400' }} />
+                    </th>
+                    <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                      <input type="text" value={auditFilters.overflow} onChange={(e) => updateAuditFilter('overflow', e.target.value)} placeholder="Filter..." aria-label="Filter by overflow behavior" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400' }} />
+                    </th>
+                    <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                      <select value={auditFilters.hasText} onChange={(e) => updateAuditFilter('hasText', e.target.value)} aria-label="Filter by has text" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400', cursor: 'pointer' }}>
+                        <option value="">All</option>
+                        {auditUniqueHasText.map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </th>
+                    <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                      <input type="text" value={auditFilters.comments} onChange={(e) => updateAuditFilter('comments', e.target.value)} placeholder="Filter..." aria-label="Filter by comments" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400' }} />
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredAudit.map((row, ri) => (
+                    <tr
+                      key={ri}
+                      style={{
+                        backgroundColor: surfaceColor,
+                        transition: prefersReducedMotion ? 'none' : 'background-color ' + transTime + ' ease-out',
+                      }}
+                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = hoverColor; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = surfaceColor; }}
+                    >
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, fontWeight: '500', color: textColor, fontSize: fontSize + 'px' }}>{row.name}</td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, color: secondaryTextColor, fontSize: fontSize + 'px' }}>
+                        {row.group && (
+                          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '500', backgroundColor: tagBgColor, color: tagTextColor }}>{row.group}</span>
+                        )}
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, color: secondaryTextColor, fontSize: fontSize + 'px', maxWidth: '220px' }}>
+                        {row.responsive && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                            {row.responsive.split(',').map((r, i) => (
+                              <span key={i} style={{ display: 'inline-block', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', backgroundColor: tagBgColor, color: tagTextColor, whiteSpace: 'nowrap' }}>{r.trim()}</span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, fontSize: fontSize + 'px', color: row.overflow ? textColor : mutedTextColor, fontWeight: row.overflow ? '500' : '400' }}>
+                        {row.overflow || '—'}
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, fontSize: fontSize + 'px', textAlign: 'center', color: row.hasText === 'Yes' ? textColor : mutedTextColor }}>
+                        {row.hasText}
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, fontSize: '12px', color: mutedTextColor, maxWidth: '280px' }}>
+                        {row.comments}
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredAudit.length === 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: mutedTextColor, fontSize: fontSize + 'px' }}>
+                        No components match your search.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'sizing' && (
+          <div>
+            <div style={{ fontSize: '13px', color: mutedTextColor, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span>{filteredSizing.length} of {sizingData.length} rows</span>
+              {Object.values(sizingFilters).some(v => v) && (
+                <button onClick={() => setSizingFilters({})} style={{ ...btnBase, padding: '4px 10px', fontSize: '12px' }}>Clear filters</button>
+              )}
+            </div>
+            <div style={{ backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border, overflow: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', maxHeight: 'calc(100vh - 200px)' }}>
+              <table role="grid" aria-label="Component sizing inspector" style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse', borderSpacing: 0 }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+                  <tr>
+                    {sizingColDefs.map(col => (
+                      <th key={col.key} style={{ padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none', fontSize: headerFontSize + 'px', fontWeight: headerFontWeight, color: secondaryTextColor, textAlign: 'left', whiteSpace: 'nowrap', minWidth: col.minW, position: 'sticky', top: 0 }}>
+                        {col.label}
+                      </th>
+                    ))}
+                  </tr>
+                  <tr>
+                    {sizingColDefs.map(col => (
+                      <th key={col.key + '_f'} style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border, position: 'sticky', top: '37px' }}>
+                        {col.type === 'text' ? (
+                          <input type="text" value={sizingFilters[col.key] || ''} onChange={(e) => updateSizingFilter(col.key, e.target.value)} placeholder="Filter..." aria-label={'Filter by ' + col.label} style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400' }} />
+                        ) : (
+                          <select value={sizingFilters[col.key] || ''} onChange={(e) => updateSizingFilter(col.key, e.target.value)} aria-label={'Filter by ' + col.label} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400', cursor: 'pointer' }}>
+                            <option value="">All</option>
+                            {(sizingUniques[col.key] || []).map(v => <option key={v} value={v}>{v}</option>)}
+                          </select>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSizing.map((row, ri) => (
+                    <tr
+                      key={ri}
+                      style={{ backgroundColor: surfaceColor, transition: prefersReducedMotion ? 'none' : 'background-color ' + transTime + ' ease-out' }}
+                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = hoverColor; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = surfaceColor; }}
+                    >
+                      {sizingColDefs.map(col => {
+                        const val = row[col.key];
+                        const isComponent = col.key === 'component';
+                        const isTicket = col.key === 'ticket';
+                        const isSupported = val === 'supported';
+                        return (
+                          <td key={col.key} style={{
+                            padding: cellPadding + 'px',
+                            borderBottom: border,
+                            fontSize: isComponent ? fontSize + 'px' : '12px',
+                            fontWeight: isComponent ? '500' : '400',
+                            color: isSupported ? accentColor : (val ? textColor : mutedTextColor),
+                            whiteSpace: 'nowrap',
+                            maxWidth: isComponent ? '240px' : '160px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}>
+                            {isSupported ? (
+                              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: accentColor }} title="Supported" />
+                            ) : isTicket && val ? (
+                              <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '10px', backgroundColor: tagBgColor, color: tagTextColor }}>{val}</span>
+                            ) : (
+                              val || '—'
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  {filteredSizing.length === 0 && (
+                    <tr>
+                      <td colSpan={sizingColDefs.length} style={{ padding: '40px', textAlign: 'center', color: mutedTextColor, fontSize: fontSize + 'px' }}>
+                        {sizingData.length === 0 ? 'No sizing data loaded. Place sizing_data.json in the same directory.' : 'No rows match your filters.'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'unified' && (() => {
+          /* ── Helpers ── */
+          const getGroupPkgCounts = (group) => {
+            const pkgCount = {};
+            group.entries.forEach(entry => {
+              [...entry.sizingPackages].forEach(p => { pkgCount[p] = (pkgCount[p] || 0) + 1; });
+            });
+            return pkgCount;
+          };
+          const sizingTagPalette = [
+            { bg: '#F1F3F5', color: '#495057', border: '#DEE2E6' },
+            { bg: '#E9ECEF', color: '#343A40', border: '#CED4DA' },
+            { bg: '#F8F9FA', color: '#495057', border: '#E9ECEF' },
+            { bg: '#F1F3F5', color: '#343A40', border: '#DEE2E6' },
+            { bg: '#E9ECEF', color: '#495057', border: '#CED4DA' },
+            { bg: '#F8F9FA', color: '#343A40', border: '#E9ECEF' },
+            { bg: '#F1F3F5', color: '#495057', border: '#DEE2E6' },
+            { bg: '#E9ECEF', color: '#343A40', border: '#CED4DA' },
+          ];
+          const getPkgColor = (pkg) => {
+            let hash = 0;
+            for (let i = 0; i < pkg.length; i++) hash = ((hash << 5) - hash + pkg.charCodeAt(i)) | 0;
+            return sizingTagPalette[Math.abs(hash) % sizingTagPalette.length];
+          };
+          /* Get layout values for a unified entry */
+          const getEntryLayoutValues = (entry, secName) => {
+            const vals = {};
+            entry.manifest.forEach(comp => {
+              const sec = comp.sections.find(s => s.title === secName);
+              if (sec) sec.items.forEach(i => { vals[i.key] = i.value || ''; });
+            });
+            return vals;
+          };
+          /* Compact expanded detail for one entry — side-by-side manifest + sizing */
+          const renderExpandedDetail = (entry) => (
+            <div style={{ padding: '12px 16px 14px 42px', backgroundColor: expandedBgColor, borderTop: '1px dashed ' + borderColor }}>
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                {/* LEFT: Manifest sections */}
+                {entry.manifest.length > 0 && (
+                  <div style={{ flex: '1 1 420px', minWidth: 0 }}>
+                    {entry.manifest.map(comp => (
+                      <div key={comp.id}>
+                        <div style={{ fontSize: '11px', fontWeight: '400', color: '#343A40', marginBottom: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span style={{ padding: '2px 6px', backgroundColor: '#F1F3F5', borderRadius: '3px', fontSize: '10px' }}>MANIFEST</span>
+                          {comp.id} &middot; {comp.extensionType} &middot; {comp.totalProps} props
+                        </div>
+                        {comp.sections.map(sec => (
+                          <div key={sec.title} style={{ marginBottom: '5px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                            <span style={{ fontSize: '11px', fontWeight: '500', color: secondaryTextColor, minWidth: '100px', flexShrink: 0 }}>{sec.title}:</span>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                              {sec.items.map(item => (
+                                <span key={item.key} style={{
+                                  display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '10px',
+                                  backgroundColor: sec.title === (uniSectionFilter || 'Layout') ? '#E9ECEF' : tagBgColor,
+                                  color: sec.title === (uniSectionFilter || 'Layout') ? '#343A40' : tagTextColor,
+                                  border: sec.title === (uniSectionFilter || 'Layout') ? '1px solid #DEE2E6' : 'none',
+                                }}>{item.key}{item.value ? ': ' + item.value : ''}</span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* RIGHT: Sizing table */}
+                {entry.sizing.length > 0 && (
+                  <div style={{ flex: '1 1 400px', minWidth: 0 }}>
+                    <div style={{ fontSize: '11px', fontWeight: '400', color: '#495057', marginBottom: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <span style={{ padding: '2px 6px', backgroundColor: '#E9ECEF', borderRadius: '3px', fontSize: '10px' }}>SIZING</span>
+                      {entry.sizing.length} rows
+                    </div>
+                    <div style={{ overflowX: 'auto', borderRadius: '6px', border: '1px solid ' + borderColor }}>
+                      <table style={{ borderCollapse: 'collapse', fontSize: '10px', width: '100%' }}>
+                        <thead><tr>
+                          {['Package', 'Mode', 'Width', 'Height', 'MinW', 'MinH', 'MaxW', 'MaxH'].map(h => (
+                            <th key={h} style={{ padding: '4px 8px', backgroundColor: headerBgColor, borderBottom: '1px solid ' + borderColor, textAlign: 'left', fontWeight: '400', color: secondaryTextColor, whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>
+                          {entry.sizing.map((sr, sri) => (
+                            <tr key={sri} style={{ backgroundColor: sri % 2 === 0 ? 'transparent' : hoverColor }}>{['package', 'mode', 'width', 'height', 'minW', 'minH', 'maxW', 'maxH'].map(k => (
+                              <td key={k} style={{ padding: '3px 8px', borderBottom: '1px solid ' + borderColor, color: sr[k] ? textColor : mutedTextColor, whiteSpace: 'nowrap' }}>{sr[k] || '\u2014'}</td>
+                            ))}</tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+
+          const secName = uniSectionFilter || 'Layout';
+
+          return (
+          <div>
+            {/* ── Toolbar ── */}
+            <div style={{ backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border, padding: '16px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '400', color: secondaryTextColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Sizing Packages</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', alignItems: 'center' }}>
+                  {allSizingPackages.map(pkg => {
+                    const active = uniPackageFilter.includes(pkg);
+                    const pal = getPkgColor(pkg);
+                    return (
+                      <button key={pkg} onClick={() => setUniPackageFilter(prev => active ? prev.filter(p => p !== pkg) : [...prev, pkg])}
+                        style={{
+                          padding: '5px 14px', fontSize: '12px', borderRadius: '20px', cursor: 'pointer',
+                          fontWeight: active ? '600' : '400', lineHeight: '1.3',
+                          border: active ? '2px solid ' + pal.color : '1px solid ' + borderColor,
+                          backgroundColor: active ? pal.bg : surfaceColor,
+                          color: active ? pal.color : secondaryTextColor,
+                          transition: prefersReducedMotion ? 'none' : 'all 0.15s ease',
+                        }}>{pkg}</button>
+                    );
+                  })}
+                  {uniPackageFilter.length > 0 && (
+                    <button onClick={() => setUniPackageFilter([])}
+                      style={{ padding: '5px 10px', fontSize: '11px', border: 'none', background: 'none', color: '#6C757D', cursor: 'pointer', fontWeight: '500', textDecoration: 'underline' }}>
+                      Clear all
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'flex-end' }}>
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: '400', color: secondaryTextColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Group by</div>
+                  <select value={uniSectionFilter} onChange={(e) => setUniSectionFilter(e.target.value)}
+                    style={{ padding: '7px 12px', fontSize: fontSize + 'px', border: border, borderRadius: borderRadius + 'px', outline: 'none', backgroundColor: backgroundColor, color: textColor, cursor: 'pointer' }}>
+                    {allSectionTitles.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1, maxWidth: '300px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: '400', color: secondaryTextColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Search</div>
+                  <input type="text" value={uniSearch} onChange={(e) => setUniSearch(e.target.value)} placeholder="Component name or ID..."
+                    style={{ width: '100%', padding: '7px 12px', fontSize: fontSize + 'px', border: border, borderRadius: borderRadius + 'px', outline: 'none', backgroundColor: backgroundColor, color: textColor, boxSizing: 'border-box' }} />
+                </div>
+                {/* Bulk actions */}
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={expandAllUniComps} style={{ ...btnBase, padding: '6px 12px', fontSize: '11px' }}>Expand all</button>
+                  <button onClick={collapseAllUniComps} style={{ ...btnBase, padding: '6px 12px', fontSize: '11px' }}>Collapse all</button>
+                  <button onClick={() => setUniCompact(p => !p)}
+                    style={{ ...btnBase, padding: '6px 12px', fontSize: '11px',
+                      backgroundColor: uniCompact ? accentColor : surfaceColor,
+                      color: uniCompact ? '#fff' : textColor,
+                      border: uniCompact ? '1px solid ' + accentColor : border,
+                    }}>
+                    {uniCompact ? 'Layout only' : 'Full view'}
+                  </button>
+                </div>
+                <div style={{ fontSize: '13px', color: mutedTextColor, paddingBottom: '4px' }}>
+                  <strong style={{ color: textColor }}>{unifiedGroups.total}</strong> components
+                  {' \u00B7 '}
+                  <strong style={{ color: textColor }}>{unifiedGroups.groups.filter(g => g.entries.length > 1).length}</strong> shared groups
+                </div>
+              </div>
+            </div>
+
+            {unifiedEntries.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '48px 40px', color: mutedTextColor, backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border }}>
+                Load a manifest JSON to see the unified cross-reference.
+              </div>
+            )}
+
+            {/* ── Shared pattern groups ── */}
+            {unifiedGroups.groups.filter(g => g.entries.length > 1).map((group, gi) => {
+              const pkgCounts = getGroupPkgCounts(group);
+              return (
+              <div key={gi} style={{ backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border, marginBottom: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+                {/* ─ Group header ─ */}
+                <div style={{ padding: '10px 16px', backgroundColor: '#F1F3F5', borderBottom: '1px solid ' + borderColor }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '500', color: '#343A40', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
+                      {secName}:
+                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', flex: 1 }}>
+                      {group.keys.map((k, ki) => {
+                        const diff = group.valueDiffs[k];
+                        return (
+                          <span key={ki} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            padding: '3px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '500',
+                            backgroundColor: diff && diff.hasDiff ? '#E9ECEF' : '#F1F3F5',
+                            color: diff && diff.hasDiff ? '#343A40' : '#495057',
+                            border: '1px solid ' + (diff && diff.hasDiff ? '#CED4DA' : '#DEE2E6'),
+                          }}>
+                            {k}
+                            {diff && diff.hasDiff && <span style={{ fontSize: '9px', fontWeight: '500' }} title={'Values differ: ' + diff.values.join(', ')}>\u26A0</span>}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    {group.hasSomeDiff && (
+                      <span style={{ padding: '3px 8px', borderRadius: '10px', fontSize: '10px', fontWeight: '400', backgroundColor: '#F1F3F5', color: '#495057', border: '1px solid #DEE2E6' }}>
+                        values differ
+                      </span>
+                    )}
+                    <span style={{
+                      padding: '4px 12px', borderRadius: '14px', fontSize: '11px', fontWeight: '500',
+                      backgroundColor: '#343A40', color: '#fff', flexShrink: 0,
+                    }}>
+                      {group.entries.length} components
+                    </span>
+                  </div>
+                </div>
+                {/* ─ Component rows ─ */}
+                <div>
+                  {group.entries.map((entry, ei) => {
+                    const compKey = 'g' + gi + '::' + entry.key;
+                    const compOpen = uniExpandedComps.has(compKey);
+                    const entryPkgs = [...entry.sizingPackages];
+                    const entryVals = getEntryLayoutValues(entry, secName);
+                    return (
+                      <div key={entry.key} style={{ borderBottom: ei < group.entries.length - 1 ? '1px solid ' + borderColor : 'none' }}>
+                        <div
+                          onClick={() => toggleUniComp(compKey)}
+                          style={{
+                            padding: '8px 16px', display: 'flex', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap',
+                            cursor: 'pointer', transition: prefersReducedMotion ? 'none' : 'background-color 0.12s ease',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = hoverColor; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                        >
+                          <span style={{ fontSize: '10px', color: mutedTextColor, flexShrink: 0, width: '14px', textAlign: 'center', marginTop: '3px' }}>{compOpen ? '\u25BC' : '\u25B6'}</span>
+                          <div style={{ minWidth: '120px', flexShrink: 0 }}>
+                            <div style={{ fontSize: '13px', fontWeight: '400', color: textColor }}>{entry.label}</div>
+                            {entry.manifest.length > 0 && (
+                              <div style={{ fontSize: '11px', color: mutedTextColor, fontStyle: 'italic' }}>{entry.manifest[0].id.split('.').pop()}</div>
+                            )}
+                          </div>
+                          {/* Inline layout key:value tags */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', flex: 1 }}>
+                            {group.keys.map((k) => {
+                              const val = entryVals[k] || '';
+                              const diff = group.valueDiffs[k];
+                              const isDiff = diff && diff.hasDiff;
+                              return (
+                                <span key={k} style={{
+                                  display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '500',
+                                  backgroundColor: isDiff ? '#E9ECEF' : '#F1F3F5',
+                                  color: isDiff ? '#E65100' : '#555',
+                                  border: isDiff ? '1px solid #DEE2E6' : '1px solid #DEE2E6',
+                                }}>
+                                  {k}{val ? ': ' : ''}<strong style={{ fontWeight: '400' }}>{val}</strong>
+                                </span>
+                              );
+                            })}
+                          </div>
+                          {/* Sizing packages — only show in full view mode */}
+                          {!uniCompact && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', maxWidth: '260px' }}>
+                              {entryPkgs.map(p => {
+                                const isUnique = pkgCounts[p] === 1;
+                                const pal = getPkgColor(p);
+                                return (
+                                  <span key={p} style={{
+                                    padding: '2px 8px', borderRadius: '10px', fontSize: '10px', fontWeight: '500',
+                                    backgroundColor: pal.bg, color: pal.color, border: '1px solid ' + pal.border,
+                                    opacity: isUnique ? 0.65 : 1,
+                                  }}>{p}{isUnique ? ' (unique)' : ''}</span>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: '4px', flexShrink: 0, marginTop: '2px' }}>
+                            {entry.manifest.length > 0 && <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '9px', fontWeight: '500', backgroundColor: '#F1F3F5', color: '#343A40' }}>MANIFEST</span>}
+                            {entry.sizing.length > 0 && <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '9px', fontWeight: '500', backgroundColor: '#E9ECEF', color: '#495057' }}>SIZING</span>}
+                            {entry.manifest.length === 0 && <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '9px', fontWeight: '400', backgroundColor: '#F1F3F5', color: '#6C757D' }}>NO MANIFEST</span>}
+                            {entry.sizing.length === 0 && <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '9px', fontWeight: '400', backgroundColor: '#F1F3F5', color: '#495057' }}>NO SIZING</span>}
+                          </div>
+                        </div>
+                        {compOpen && renderExpandedDetail(entry)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              );
+            })}
+
+            {/* ── Unique patterns (1 component) ── */}
+            {unifiedGroups.groups.filter(g => g.entries.length === 1).length > 0 && (
+              <div style={{ marginTop: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '400', color: secondaryTextColor, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Unique Patterns</h3>
+                  <span style={{ fontSize: '12px', color: mutedTextColor }}>
+                    {unifiedGroups.groups.filter(g => g.entries.length === 1).length} components with no shared match
+                  </span>
+                </div>
+                <div style={{ backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                  {unifiedGroups.groups.filter(g => g.entries.length === 1).map((g, i) => {
+                    const e = g.entries[0];
+                    const compKey = 'unique::' + e.key;
+                    const compOpen = uniExpandedComps.has(compKey);
+                    const entryVals = getEntryLayoutValues(e, secName);
+                    return (
+                      <div key={i} style={{ borderBottom: '1px solid ' + borderColor }}>
+                        <div
+                          onClick={() => toggleUniComp(compKey)}
+                          style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', cursor: 'pointer' }}
+                          onMouseEnter={(ev) => { ev.currentTarget.style.backgroundColor = hoverColor; }}
+                          onMouseLeave={(ev) => { ev.currentTarget.style.backgroundColor = 'transparent'; }}
+                        >
+                          <span style={{ fontSize: '10px', color: mutedTextColor, width: '14px', textAlign: 'center' }}>{compOpen ? '\u25BC' : '\u25B6'}</span>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: textColor, minWidth: '120px' }}>{e.label}</span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', flex: 1 }}>
+                            {g.keys.map((k, ki) => (
+                              <span key={ki} style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '500', backgroundColor: '#F1F3F5', color: '#495057', border: '1px solid #DEE2E6' }}>
+                                {k}{entryVals[k] ? ': ' : ''}<strong>{entryVals[k] || ''}</strong>
+                              </span>
+                            ))}
+                          </div>
+                          {!uniCompact && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', flexShrink: 0 }}>
+                              {[...e.sizingPackages].map(p => {
+                                const pal = getPkgColor(p);
+                                return <span key={p} style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '9px', fontWeight: '400', backgroundColor: pal.bg, color: pal.color, border: '1px solid ' + pal.border }}>{p}</span>;
+                              })}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                            {e.manifest.length > 0 && <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '9px', fontWeight: '500', backgroundColor: '#F1F3F5', color: '#343A40' }}>MANIFEST</span>}
+                            {e.sizing.length > 0 && <span style={{ padding: '2px 6px', borderRadius: '3px', fontSize: '9px', fontWeight: '500', backgroundColor: '#E9ECEF', color: '#495057' }}>SIZING</span>}
+                          </div>
+                        </div>
+                        {compOpen && renderExpandedDetail(e)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Sizing-only (no manifest section match) ── */}
+            {unifiedGroups.ungrouped.length > 0 && (
+              <div style={{ marginTop: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '400', color: '#495057', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                    No {secName} Data
+                  </h3>
+                  <span style={{ fontSize: '12px', color: mutedTextColor }}>{unifiedGroups.ungrouped.length} components</span>
+                </div>
+                <div style={{ backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                  {unifiedGroups.ungrouped.map((e, i) => (
+                    <div key={i} style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid ' + borderColor, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '500', color: textColor, minWidth: '120px' }}>{e.label}</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', flex: 1 }}>
+                        {[...e.sizingPackages].map(p => {
+                          const pal = getPkgColor(p);
+                          return <span key={p} style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '10px', fontWeight: '400', backgroundColor: pal.bg, color: pal.color, border: '1px solid ' + pal.border }}>{p}</span>;
+                        })}
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                        {e.manifest.length > 0
+                          ? <span style={{ fontSize: '10px', color: mutedTextColor }}>no {secName} section in manifest</span>
+                          : <span style={{ fontSize: '10px', color: '#6C757D', fontWeight: '500' }}>not in manifest</span>
+                        }
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          );
+        })()}
+
+
+
+        {activeTab === 'patterns' && (
+
+          <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+              <select
+                value={patternSection}
+                onChange={(e) => setPatternSection(e.target.value)}
+                aria-label="Filter by section type"
+                style={{ padding: '8px 12px', fontSize: fontSize + 'px', border: border, borderRadius: borderRadius + 'px', outline: 'none', backgroundColor: surfaceColor, color: textColor, cursor: 'pointer' }}
+              >
+                <option value="">All Sections</option>
+                {allSectionTitles.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <input
+                type="text"
+                value={patternSearch}
+                onChange={(e) => setPatternSearch(e.target.value)}
+                placeholder="Search by property or component..."
+                aria-label="Search patterns"
+                style={{ flex: 1, maxWidth: '360px', padding: '8px 12px', fontSize: fontSize + 'px', border: border, borderRadius: borderRadius + 'px', outline: 'none', backgroundColor: surfaceColor, color: textColor }}
+              />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: secondaryTextColor }}>
+                Min group size
+                <select
+                  value={patternMinGroup}
+                  onChange={(e) => setPatternMinGroup(parseInt(e.target.value, 10))}
+                  style={{ padding: '4px 8px', fontSize: '12px', border: border, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, cursor: 'pointer' }}
+                >
+                  {[2, 3, 4, 5, 10].map(n => <option key={n} value={n}>{n}+</option>)}
+                </select>
+              </label>
+            </div>
+
+            {manifestEmpty && (
+              <div style={{ textAlign: 'center', padding: '40px', color: mutedTextColor }}>
+                Load a manifest JSON to analyze property patterns.
+              </div>
+            )}
+
+            {!manifestEmpty && Object.keys(filteredPatternGroups).length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px', color: mutedTextColor }}>
+                No shared patterns found with current filters.
+              </div>
+            )}
+
+            {!manifestEmpty && Object.entries(filteredPatternGroups).map(([secTitle, groups]) => (
+              <div key={secTitle} style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '500', color: sectionTitleColor, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {secTitle}
+                  <span style={{ fontSize: '12px', fontWeight: '400', color: mutedTextColor, textTransform: 'none', letterSpacing: '0em' }}>
+                    ({groups.length} pattern{groups.length !== 1 ? 's' : ''})
+                  </span>
+                </h3>
+                {groups.map((group, gi) => (
+                  <div key={gi} style={{
+                    backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border,
+                    padding: '16px', marginBottom: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '6px' }}>
+                      <div>
+                        <div style={{ fontSize: '10px', fontWeight: '400', color: '#495057', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Properties</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {group.keys.map((k, ki) => (
+                            <span key={ki} style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: '500',
+                              backgroundColor: '#E9ECEF', color: '#495057', border: '1px solid #DEE2E6',
+                            }}>
+                              <span style={{ fontSize: '9px', opacity: 0.7 }}>{'\u25C6'}</span>
+                              {k}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <span style={{
+                        display: 'inline-block', padding: '2px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: '500',
+                        backgroundColor: accentColor, color: '#fff', whiteSpace: 'nowrap', flexShrink: 0, alignSelf: 'flex-start',
+                      }}>
+                        {group.components.length} components
+                      </span>
+                    </div>
+                    <div style={{ borderTop: '1px dashed ' + borderColor, paddingTop: '8px', marginTop: '4px' }}>
+                      <div style={{ fontSize: '10px', fontWeight: '400', color: '#6C757D', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>Components</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {group.components.map((comp, ci) => (
+                          <span
+                            key={ci}
+                            title={comp.id}
+                            style={{
+                              display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: '12px',
+                              backgroundColor: '#E9ECEF', color: '#495057', border: '1px solid #DEE2E6',
+                              cursor: 'default',
+                            }}
+                          >
+                            {comp.displayName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'manifest' && manifestEmpty && (
+          <div style={{ textAlign: 'center', padding: '60px 40px' }}>
+
+
+            <p style={{ fontSize: fontSize + 'px', color: mutedTextColor, marginBottom: '24px', lineHeight: '1.6' }}>
+              {emptyMessage}
+            </p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={primaryBtn}
+              aria-label="Load manifest JSON file"
+            >
+              Load JSON file
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleFileLoad}
+              style={{ display: 'none' }}
+              aria-hidden="true"
+            />
+          </div>
+        )}
+
+        {activeTab === 'manifest' && !manifestEmpty && showStats && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '13px', color: mutedTextColor, alignItems: 'center', marginBottom: propFilters.length > 0 ? '10px' : '0' }}>
+              <span>{filtered.length} of {components.length} components</span>
+              <span>{expandedRows.size} expanded</span>
+              <button
+                onClick={() => setShowPropPanel(prev => !prev)}
+                style={{ ...btnBase, padding: '4px 12px', fontSize: '12px', backgroundColor: showPropPanel ? accentColor : 'transparent', color: showPropPanel ? '#fff' : secondaryTextColor, border: '1px solid ' + (showPropPanel ? accentColor : borderColor) }}
+              >
+                {showPropPanel ? 'Hide' : 'Show'} Property Filters {propFilters.length > 0 ? '(' + propFilters.length + ')' : ''}
+              </button>
+              {(Object.values(manifestFilters).some(v => Array.isArray(v) ? v.length > 0 : !!v) || propFilters.length > 0) && (
+                <button
+
+                  onClick={() => { setManifestFilters({ id: '', extensionType: '', displayName: [], sections: '' }); setPropFilters([]); }}
+
+                  style={{ ...btnBase, padding: '4px 10px', fontSize: '12px' }}
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+            {propFilters.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: mutedTextColor, marginRight: '4px' }}>Active:</span>
+                {propFilters.map(f => {
+                  const sepIdx = f.indexOf('::');
+                  const sec = f.slice(0, sepIdx);
+                  const prop = f.slice(sepIdx + 2);
+                  return (
+                    <span
+                      key={f}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        padding: '2px 8px', borderRadius: '4px', fontSize: '11px',
+                        backgroundColor: accentColor, color: '#fff', cursor: 'pointer',
+                      }}
+                      onClick={() => togglePropFilter(f)}
+                      title={'Remove filter: ' + sec + ' > ' + prop}
+                    >
+                      <span style={{ fontWeight: '500' }}>{sec}:</span> {prop}
+                      <span style={{ marginLeft: '2px', opacity: 0.7 }}>×</span>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+
+
+        {activeTab === 'manifest' && !manifestEmpty && showPropPanel && (
+          <div style={{
+            backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border,
+            padding: '16px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <input
+                type="text"
+                value={propSearch}
+                onChange={(e) => setPropSearch(e.target.value)}
+                placeholder="Search properties..."
+                aria-label="Search within property filters"
+                style={{
+                  flex: 1, maxWidth: '320px', padding: '6px 10px', fontSize: '12px',
+                  border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none',
+                  backgroundColor: backgroundColor, color: textColor,
+                }}
+              />
+              <button
+                onClick={() => { const all = new Set(openPropSections); if (all.size === allSectionTitles.length) setOpenPropSections(new Set()); else setOpenPropSections(new Set(allSectionTitles)); }}
+                style={{ ...btnBase, padding: '4px 10px', fontSize: '11px' }}
+              >
+                {openPropSections.size === allSectionTitles.length ? 'Collapse all' : 'Expand all'}
+              </button>
+            </div>
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {allSectionTitles.map(secTitle => {
+                const props = allSectionProps[secTitle] || [];
+                const searchLower = propSearch.toLowerCase();
+                const filteredProps = propSearch
+                  ? props.filter(p => p.toLowerCase().includes(searchLower) || secTitle.toLowerCase().includes(searchLower))
+                  : props;
+                if (propSearch && filteredProps.length === 0) return null;
+                const isOpen = openPropSections.has(secTitle) || (propSearch && filteredProps.length > 0);
+                const activeInSection = propFilters.filter(f => f.startsWith(secTitle + '::')).length;
+                return (
+                  <div key={secTitle} style={{ marginBottom: '2px' }}>
+                    <button
+                      onClick={() => togglePropSection(secTitle)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                        background: 'none', border: 'none', padding: '6px 4px', cursor: 'pointer',
+                        fontSize: '12px', fontWeight: '500', color: sectionTitleColor, textAlign: 'left',
+                      }}
+                    >
+                      <span style={{
+                        display: 'inline-block', fontSize: '10px', color: mutedTextColor,
+                        transition: prefersReducedMotion ? 'none' : 'transform 150ms ease-out',
+                        transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                      }}>▶</span>
+                      {secTitle}
+                      <span style={{ fontSize: '11px', fontWeight: '400', color: mutedTextColor }}>
+                        ({props.length})
+                      </span>
+                      {activeInSection > 0 && (
+                        <span style={{
+                          fontSize: '10px', fontWeight: '500', padding: '1px 6px', borderRadius: '4px',
+                          backgroundColor: accentColor, color: '#fff',
+                        }}>
+                          {activeInSection} active
+                        </span>
+                      )}
+                    </button>
+                    {isOpen && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '4px 0 8px 20px' }}>
+                        {filteredProps.map(propKey => {
+                          const filterKey = secTitle + '::' + propKey;
+                          const isChecked = propFilters.includes(filterKey);
+                          return (
+                            <label
+                              key={propKey}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '3px 8px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer',
+                                backgroundColor: isChecked ? accentColor : tagBgColor,
+                                color: isChecked ? '#fff' : tagTextColor,
+                                border: '1px solid ' + (isChecked ? accentColor : 'transparent'),
+                                transition: prefersReducedMotion ? 'none' : 'all 150ms ease-out',
+                                userSelect: 'none',
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => togglePropFilter(filterKey)}
+                                style={{ display: 'none' }}
+                              />
+                              {propKey}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'manifest' && !manifestEmpty && (
+        <div style={{ backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <table role="grid" aria-label="Component manifest analysis"
+ style={{ width: '100%', borderCollapse: 'collapse', borderSpacing: 0, tableLayout: 'auto' }}>
+            <thead>
+              <tr>
+                <th style={{ width: '40px', padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none', fontSize: headerFontSize + 'px', fontWeight: headerFontWeight, color: secondaryTextColor, textAlign: 'left' }}></th>
+                <th style={{ padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none', fontSize: headerFontSize + 'px', fontWeight: headerFontWeight, color: secondaryTextColor, textAlign: 'left' }}>Component ID</th>
+                <th style={{ padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none', fontSize: headerFontSize + 'px', fontWeight: headerFontWeight, color: secondaryTextColor, textAlign: 'left', whiteSpace: 'nowrap' }}>Extension Type</th>
+                <th style={{ padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none', fontSize: headerFontSize + 'px', fontWeight: headerFontWeight, color: secondaryTextColor, textAlign: 'left' }}>Display Name</th>
+                <th style={{ padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none', fontSize: headerFontSize + 'px', fontWeight: headerFontWeight, color: secondaryTextColor, textAlign: 'left' }}>Declared Sections</th>
+              </tr>
+              <tr>
+                <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}></th>
+                <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                  <input type="text" value={manifestFilters.id} onChange={(e) => updateManifestFilter('id', e.target.value)} placeholder="Filter..." aria-label="Filter by component ID" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400' }} />
+                </th>
+                <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                  <select value={manifestFilters.extensionType} onChange={(e) => updateManifestFilter('extensionType', e.target.value)} aria-label="Filter by extension type" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400', cursor: 'pointer' }}>
+                    <option value="">All</option>
+                    {manifestUniqueExtTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </th>
+                <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                  <button
+                    ref={displayNameBtnRef}
+                    onClick={() => setShowDisplayNameDD(prev => !prev)}
+                    aria-label="Filter by display name"
+                    style={{
+                      width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px',
+                      outline: 'none', backgroundColor: surfaceColor, color: manifestFilters.displayName.length > 0 ? textColor : mutedTextColor,
+                      fontWeight: '400', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px',
+                    }}
+                  >
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                      {manifestFilters.displayName.length === 0 ? 'All' : manifestFilters.displayName.length + ' selected'}
+                    </span>
+                    <span style={{ fontSize: '10px', lineHeight: 1, flexShrink: 0 }}>{showDisplayNameDD ? '\u25B2' : '\u25BC'}</span>
+                  </button>
+                  {showDisplayNameDD && ReactDOM.createPortal(
+                    <div ref={displayNameDDRef} style={{
+                      position: 'fixed', top: ddPos.top + 'px', left: ddPos.left + 'px', width: ddPos.width + 'px', maxHeight: '320px',
+                      backgroundColor: surfaceColor, border: '1px solid ' + borderColor, borderRadius: '6px',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 10000, display: 'flex', flexDirection: 'column',
+                    }}>
+                      <div style={{ padding: '6px', borderBottom: '1px solid ' + borderColor }}>
+                        <input
+                          type="text"
+                          value={displayNameSearch}
+                          onChange={(e) => setDisplayNameSearch(e.target.value)}
+                          placeholder="Search names..."
+                          autoFocus
+                          style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div style={{ padding: '4px 0', borderBottom: '1px solid ' + borderColor, display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        <button onClick={() => {
+                          const visibleNames = manifestUniqueDisplayNames.filter(n => !displayNameSearch || n.toLowerCase().includes(displayNameSearch.toLowerCase()));
+                          updateManifestFilter('displayName', visibleNames);
+                        }} style={{ padding: '2px 8px', fontSize: '11px', border: 'none', background: 'none', color: accentColor, cursor: 'pointer', fontWeight: '500' }}>Select all</button>
+                        <button onClick={() => updateManifestFilter('displayName', [])} style={{ padding: '2px 8px', fontSize: '11px', border: 'none', background: 'none', color: accentColor, cursor: 'pointer', fontWeight: '500' }}>Clear</button>
+                      </div>
+                      <div style={{ overflowY: 'auto', maxHeight: '240px', padding: '4px 0' }}>
+                        {manifestUniqueDisplayNames
+                          .filter(name => !displayNameSearch || name.toLowerCase().includes(displayNameSearch.toLowerCase()))
+                          .map(name => {
+                            const checked = manifestFilters.displayName.includes(name);
+                            return (
+                              <label key={name} style={{
+                                display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 10px', fontSize: '12px',
+                                color: textColor, cursor: 'pointer', userSelect: 'none',
+                                backgroundColor: checked ? expandedBgColor : 'transparent',
+                              }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = hoverColor; }}
+                                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = checked ? expandedBgColor : 'transparent'; }}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => {
+                                    const next = checked
+                                      ? manifestFilters.displayName.filter(n => n !== name)
+                                      : [...manifestFilters.displayName, name];
+                                    updateManifestFilter('displayName', next);
+                                  }}
+                                  style={{ accentColor: accentColor, cursor: 'pointer', flexShrink: 0 }}
+                                />
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                              </label>
+                            );
+                          })}
+                        {manifestUniqueDisplayNames.filter(name => !displayNameSearch || name.toLowerCase().includes(displayNameSearch.toLowerCase())).length === 0 && (
+                          <div style={{ padding: '8px 10px', fontSize: '12px', color: mutedTextColor }}>No matches</div>
+                        )}
+                      </div>
+                    </div>,
+                    document.body
+                  )}
+                </th>
+
+
+                <th style={{ padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: border }}>
+                  <input type="text" value={manifestFilters.sections} onChange={(e) => updateManifestFilter('sections', e.target.value)} placeholder="Filter..." aria-label="Filter by section name" style={{ width: '100%', padding: '4px 8px', fontSize: '12px', border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none', backgroundColor: surfaceColor, color: textColor, fontWeight: '400' }} />
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filtered.map((comp, index) => {
+                const isExpanded = expandedRows.has(comp.id);
+                return (
+                  <React.Fragment key={index}>
+                    <tr
+                      style={{
+                        backgroundColor: surfaceColor,
+                        cursor: 'pointer',
+                        transition: prefersReducedMotion ? 'none' : 'background-color ' + transTime + ' ease-out',
+                      }}
+                      onClick={() => toggleExpand(comp.id)}
+                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = hoverColor; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = surfaceColor; }}
+                    >
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, verticalAlign: 'top' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleExpand(comp.id); }}
+                          aria-label={isExpanded ? 'Collapse ' + comp.displayName : 'Expand ' + comp.displayName}
+                          aria-expanded={isExpanded}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px',
+                            fontSize: '14px', color: mutedTextColor,
+                            transition: prefersReducedMotion ? 'none' : 'transform 200ms ease-out',
+                            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          ▶
+                        </button>
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, verticalAlign: 'top', fontSize: fontSize + 'px', fontWeight: '400', color: textColor, wordBreak: 'break-all', maxWidth: '320px' }}>
+                        {comp.id}
+                        {comp.selector && (
+                          <span style={{ display: 'block', fontSize: '12px', color: mutedTextColor, marginTop: '2px' }}>{comp.selector}</span>
+                        )}
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, verticalAlign: 'top', fontSize: fontSize + 'px', color: secondaryTextColor, whiteSpace: 'nowrap' }}>
+                        {comp.extensionType}
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, verticalAlign: 'top', fontSize: fontSize + 'px', color: textColor, fontWeight: '500' }}>
+                        {comp.displayName}
+                      </td>
+                      <td style={{ padding: cellPadding + 'px', borderBottom: border, verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {comp.badges.map((badge, bi) => (
+                            <span key={bi} style={{
+                              display: 'inline-block',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: '500',
+                              backgroundColor: tagBgColor,
+                              color: tagTextColor,
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {badge.title}: {badge.count}
+                            </span>
+                          ))}
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: '400',
+                            backgroundColor: 'transparent',
+                            color: mutedTextColor,
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {comp.totalProps} total
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {isExpanded && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          style={{
+                            padding: '0 ' + cellPadding + 'px ' + cellPadding + 'px ' + (cellPadding + 40) + 'px',
+                            borderBottom: border,
+                            backgroundColor: expandedBgColor,
+                            verticalAlign: 'top',
+                          }}
+                        >
+                          <div style={{
+                            opacity: prefersReducedMotion ? 1 : 1,
+                            animation: prefersReducedMotion ? 'none' : 'fadeSlideIn 400ms ease-out',
+                          }}>
+                            {comp.sections.map((section, si) => (
+                              <div key={si} style={{ marginTop: si === 0 ? '12px' : '16px' }}>
+                                <div style={{
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  color: sectionTitleColor,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em',
+                                  marginBottom: '8px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                }}>
+                                  {section.title}
+                                  {section.count !== undefined && (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: '400',
+                                      color: mutedTextColor,
+                                      textTransform: 'none',
+                                      letterSpacing: '0em',
+                                    }}>
+                                      ({section.count})
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                  {section.items.map((item, ii) => (
+                                    <span
+                                      key={ii}
+                                      title={item.value ? item.key + ': ' + item.value : item.key}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '3px 10px',
+                                        borderRadius: '4px',
+                                        fontSize: '12px',
+                                        fontWeight: '400',
+                                        backgroundColor: surfaceColor,
+                                        color: secondaryTextColor,
+                                        border: '1px solid ' + borderColor,
+                                        maxWidth: item.long ? '100%' : '360px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: '500', color: textColor }}>{item.key}</span>
+                                      {item.value && (
+                                        <span style={{ color: mutedTextColor, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                          {item.value}
+                                        </span>
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            {comp.sections.length === 0 && (
+                              <p style={{ fontSize: '13px', color: mutedTextColor, padding: '12px 0' }}>No declared properties found for this component.</p>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: mutedTextColor, fontSize: fontSize + 'px' }}>
+                    {(Object.values(manifestFilters).some(v => Array.isArray(v) ? v.length > 0 : !!v) || propFilters.length > 0) ? 'No components match your filters.' : 'No components found in this manifest.'}
+
+
+
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        )}
+
+      </div>
+
+      <style dangerouslySetInnerHTML
+={{ __html: `
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}} />
+    </div>
+  );
+}
+

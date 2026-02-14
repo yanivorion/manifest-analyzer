@@ -1,0 +1,53 @@
+{
+    "responsive.components.HeaderSection": {
+        "extensionType": "SYSTEM",
+        "manifest": {
+            "editorElement": {
+                "displayName": "Header",
+                "selector": ".header"
+            }
+        }
+    },
+    "responsive.components.Section": {
+        "extensionType": "SYSTEM",
+        "manifest": {
+            "editorElement": {
+                "displayName": "Section",
+                "selector": ".section"
+            }
+        }
+    },
+    "responsive.components.FooterSection": {
+        "extensionType": "SYSTEM",
+        "manifest": {
+            "editorElement": {
+                "displayName": "Footer",
+                "selector": ".footer"
+            }
+        }
+    },
+    "wixEditorElements.ButtonTest": {
+        "extensionType": "EDITOR_REACT_COMPONENT",
+        "manifest": {
+            "type": "wixEditorElements.ButtonTest",
+            "description": "Guide visitors through your site and drive important actions using customizable button elements.",
+            "editorElement": {
+                "selector": ".buttontest",
+                "displayName": "ButtonTest",
+                "archetype": "Button"
+            }
+        }
+    },
+    "wixEditorElements.Button": {
+        "extensionType": "EDITOR_REACT_COMPONENT",
+        "manifest": {
+            "type": "wixEditorElements.Button",
+            "description": "Guide visitors through your site and drive important actions using customizable button elements.",
+            "editorElement": {
+                "selector": ".button",
+                "displayName": "Button",
+                "archetype": "Button"
+            }
+        }
+    }
+}
