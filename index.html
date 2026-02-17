@@ -678,6 +678,19 @@ function Component({ config = {} }) {
   const [pkgSearch, setPkgSearch] = React.useState('');
   const pkgDDBtnRef = React.useRef(null);
   const pkgDDRef = React.useRef(null);
+  const [pkgDDPos, setPkgDDPos] = React.useState({ top: 0, left: 0, width: 0 });
+  React.useEffect(() => {
+    if (!showPkgDD) return;
+    const recalc = () => {
+      if (pkgDDBtnRef.current) {
+        const r = pkgDDBtnRef.current.getBoundingClientRect();
+        setPkgDDPos({ top: r.bottom + 4, left: r.left, width: r.width });
+      }
+    };
+    recalc();
+    window.addEventListener('scroll', recalc, true);
+    return () => window.removeEventListener('scroll', recalc, true);
+  }, [showPkgDD]);
   const [uniSectionFilter, setUniSectionFilter] = React.useState('Layout');
   const [uniSearch, setUniSearch] = React.useState('');
   const [uniExpandedComps, setUniExpandedComps] = React.useState(new Set());
@@ -1521,10 +1534,11 @@ function Component({ config = {} }) {
                   )}
                   <span style={{ fontSize: '10px', lineHeight: 1, flexShrink: 0, marginLeft: 'auto', display: 'inline-block', transition: prefersReducedMotion ? 'none' : 'transform 250ms ' + shopifyEase, transform: showPkgDD ? 'rotate(180deg)' : 'rotate(0deg)' }}>{'\u25BC'}</span>
                 </div>
+                  {ReactDOM.createPortal(
                   <div ref={pkgDDRef} style={{
-                    position: 'absolute', top: '100%', left: 0, marginTop: '4px', width: '100%',
+                    position: 'fixed', top: pkgDDPos.top + 'px', left: pkgDDPos.left + 'px', width: pkgDDPos.width + 'px',
                     ...glassPanel, borderRadius: (borderRadius + 2) + 'px',
-                    zIndex: 9999,
+                    zIndex: 10000,
                     maxHeight: showPkgDD ? '380px' : '0px',
                     opacity: showPkgDD ? 1 : 0,
                     transform: showPkgDD ? 'translateY(0)' : 'translateY(-8px)',
@@ -1599,7 +1613,7 @@ function Component({ config = {} }) {
                         <button onClick={() => { setUniPackageFilter([]); }} style={{ ...btnBase, padding: '3px 8px', fontSize: '10px' }}>Clear all</button>
                       )}
                     </div>
-                  </div>
+                  </div>, document.body)}
               </div>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'flex-end' }}>
