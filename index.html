@@ -907,14 +907,29 @@ function Component({ config = {} }) {
     setExpandedRows(new Set());
   }, []);
 
-  const border = '1px solid ' + borderColor;
+  const border = '1px solid rgba(233,236,239,0.7)';
   const transTime = prefersReducedMotion ? '0ms' : '200ms';
   /* Shopify-style easing */
   const shopifyEase = 'cubic-bezier(0.22, 1, 0.36, 1)';
   const shopifyTrans = prefersReducedMotion ? 'none' : 'background-color 200ms ' + shopifyEase + ', color 200ms ' + shopifyEase + ', border-color 200ms ' + shopifyEase + ', box-shadow 200ms ' + shopifyEase + ', opacity 200ms ' + shopifyEase;
-  /* Deep floating shadow for large frames */
-  const frameShadow = '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.03)';
-  const frameHoverShadow = '0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.05)';
+  /* Glass-morphism tokens */
+  const glassBg = 'rgba(255,255,255,0.72)';
+  const glassBlur = 'blur(40px)';
+  const glassBorder = '1px solid rgba(255,255,255,0.45)';
+  const glassShadow = '-1.5px 0 0 rgba(255,255,255,0.6), 0 1px 2px rgba(0,0,0,0.03), 0 4px 16px rgba(0,0,0,0.05), 0 12px 40px rgba(0,0,0,0.025)';
+  /* Subtle page gradient */
+  const pageBg = 'linear-gradient(160deg, ' + backgroundColor + ' 0%, #f0f2f5 35%, #ebf0f6 60%, #f4f2ef 100%)';
+  /* Deep floating shadow for large frames – glass-adapted */
+  const frameShadow = '-1.5px 0 0 rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.03), 0 4px 16px rgba(0,0,0,0.045), 0 12px 40px rgba(0,0,0,0.02)';
+  const frameHoverShadow = '-1.5px 0 0 rgba(255,255,255,0.6), 0 2px 4px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06), 0 16px 48px rgba(0,0,0,0.03)';
+  /* Glass surface base – applied to cards, table wrappers, panels */
+  const glassPanel = {
+    backgroundColor: glassBg,
+    backdropFilter: glassBlur,
+    WebkitBackdropFilter: glassBlur,
+    border: glassBorder,
+    boxShadow: glassShadow,
+  };
 
   const btnBase = {
     background: 'none',
@@ -942,25 +957,27 @@ function Component({ config = {} }) {
   /* Shared input/select style for filters */
   const inputStyle = {
     padding: '6px 10px', fontSize: '12px', fontWeight: '300',
-    border: '1px solid ' + borderColor, borderRadius: (borderRadius + 2) + 'px',
-    outline: 'none', backgroundColor: surfaceColor, color: textColor,
+    border: '1px solid rgba(233,236,239,0.6)', borderRadius: (borderRadius + 2) + 'px',
+    outline: 'none', backgroundColor: 'rgba(255,255,255,0.5)', color: textColor,
     transition: shopifyTrans,
   };
 
   /* ── Unified Design System – shared table typography ── */
   const thStyle = {
-    padding: cellPadding + 'px', backgroundColor: headerBgColor, borderBottom: 'none',
+    padding: cellPadding + 'px', backgroundColor: 'rgba(241,243,245,0.55)', borderBottom: 'none',
     fontSize: '10px', fontWeight: '500', color: secondaryTextColor, textAlign: 'left',
     whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.06em',
+    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
   };
   const thFilterStyle = {
     padding: '4px ' + cellPadding + 'px ' + cellPadding + 'px',
-    backgroundColor: headerBgColor, borderBottom: border,
+    backgroundColor: 'rgba(241,243,245,0.45)', borderBottom: border,
+    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
   };
   const filterInput = {
     width: '100%', padding: '4px 8px', fontSize: '12px', fontWeight: '300',
-    border: '1px solid ' + borderColor, borderRadius: '4px', outline: 'none',
-    backgroundColor: surfaceColor, color: textColor, boxSizing: 'border-box',
+    border: '1px solid rgba(233,236,239,0.6)', borderRadius: '4px', outline: 'none',
+    backgroundColor: 'rgba(255,255,255,0.5)', color: textColor, boxSizing: 'border-box',
   };
   const tdBase = {
     padding: cellPadding + 'px', borderBottom: border, fontSize: '13px',
@@ -1017,8 +1034,8 @@ function Component({ config = {} }) {
     const panel = (
       <div ref={panelRef} style={{
         position: 'fixed', top: pos.top + 'px', left: pos.left + 'px', width: pos.width + 'px',
-        backgroundColor: surfaceColor, border: border, borderRadius: (borderRadius + 2) + 'px',
-        boxShadow: frameShadow, zIndex: 10000,
+        ...glassPanel, borderRadius: (borderRadius + 2) + 'px',
+        zIndex: 10000,
         maxHeight: open ? '260px' : '0px', opacity: open ? 1 : 0,
         transform: open ? 'translateY(0)' : 'translateY(-6px)',
         transition: prefersReducedMotion ? 'none' : 'max-height 250ms ' + shopifyEase + ', opacity 180ms ' + shopifyEase + ', transform 200ms ' + shopifyEase,
@@ -1075,7 +1092,7 @@ function Component({ config = {} }) {
       style={{
         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
         overflow: 'auto',
-        backgroundColor,
+        background: pageBg,
         fontFamily: '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
         fontSize: fontSize + 'px',
         fontWeight,
@@ -1085,11 +1102,13 @@ function Component({ config = {} }) {
         letterSpacing: '-0.01em',
       }}
     >
-      {/* ── Dark header bar ── */}
+      {/* ── Dark header bar with glass overlay ── */}
       <div style={{
-        backgroundColor: accentColor, color: '#FFFFFF', padding: '14px 28px',
+        backgroundColor: 'rgba(33,37,41,0.88)', backdropFilter: 'blur(24px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+        color: '#FFFFFF', padding: '14px 28px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)',
+        boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 8px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08)',
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
           <h1 style={{
@@ -1182,8 +1201,8 @@ function Component({ config = {} }) {
             </div>
 
             <div style={{
-              backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border,
-              boxShadow: frameShadow, position: 'relative',
+              ...glassPanel, borderRadius: (borderRadius + 2) + 'px',
+              position: 'relative',
               animation: prefersReducedMotion ? 'none' : 'shopifyReveal 500ms ' + shopifyEase + ' both',
             }}>
               <table role="grid" aria-label="Component audit table" style={{ width: '100%', borderCollapse: 'collapse', borderSpacing: 0, tableLayout: 'auto' }}>
@@ -1224,13 +1243,13 @@ function Component({ config = {} }) {
                     <tr
                       key={ri}
                       style={{
-                        backgroundColor: surfaceColor,
+                        backgroundColor: 'transparent',
                         transition: shopifyTrans,
                         animation: prefersReducedMotion ? 'none' : 'rowStagger 350ms ' + shopifyEase + ' both',
                         animationDelay: prefersReducedMotion ? '0ms' : Math.min(ri * 30, 600) + 'ms',
                       }}
-                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = hoverColor; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = surfaceColor; }}
+                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = 'rgba(241,243,245,0.4)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       <td style={tdName}>{row.name}</td>
                       <td style={tdBase}>
@@ -1278,8 +1297,8 @@ function Component({ config = {} }) {
               )}
             </div>
             <div style={{
-              backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border, overflow: 'auto',
-              boxShadow: frameShadow, maxHeight: 'calc(100vh - 200px)',
+              ...glassPanel, borderRadius: (borderRadius + 2) + 'px', overflow: 'auto',
+              maxHeight: 'calc(100vh - 200px)',
               animation: prefersReducedMotion ? 'none' : 'shopifyReveal 500ms ' + shopifyEase + ' both',
             }}>
               <table role="grid" aria-label="Component sizing inspector" style={{ width: 'max-content', minWidth: '100%', borderCollapse: 'collapse', borderSpacing: 0 }}>
@@ -1307,12 +1326,12 @@ function Component({ config = {} }) {
                   {filteredSizing.map((row, ri) => (
                     <tr
                       key={ri}
-                      style={{ backgroundColor: surfaceColor, transition: shopifyTrans,
+                      style={{ backgroundColor: 'transparent', transition: shopifyTrans,
                         animation: prefersReducedMotion ? 'none' : 'rowStagger 350ms ' + shopifyEase + ' both',
                         animationDelay: prefersReducedMotion ? '0ms' : Math.min(ri * 30, 600) + 'ms',
                       }}
-                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = hoverColor; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = surfaceColor; }}
+                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = 'rgba(241,243,245,0.4)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       {sizingColDefs.map(col => {
                         const val = row[col.key];
@@ -1460,8 +1479,8 @@ function Component({ config = {} }) {
           <div>
             {/* ── Toolbar ── */}
             <div style={{
-              backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border, padding: '16px', marginBottom: '20px',
-              boxShadow: frameShadow, transition: shopifyTrans,
+              ...glassPanel, borderRadius: (borderRadius + 2) + 'px', padding: '16px', marginBottom: '20px',
+              transition: shopifyTrans,
             }}>
               {/* ── Sizing Packages – full-width tag input ── */}
               <div style={{ position: 'relative', marginBottom: '14px' }}>
@@ -1504,8 +1523,8 @@ function Component({ config = {} }) {
                 </div>
                   <div ref={pkgDDRef} style={{
                     position: 'absolute', top: '100%', left: 0, marginTop: '4px', width: '100%',
-                    backgroundColor: surfaceColor, border: border, borderRadius: (borderRadius + 2) + 'px',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)', zIndex: 9999,
+                    ...glassPanel, borderRadius: (borderRadius + 2) + 'px',
+                    zIndex: 9999,
                     maxHeight: showPkgDD ? '380px' : '0px',
                     opacity: showPkgDD ? 1 : 0,
                     transform: showPkgDD ? 'translateY(0)' : 'translateY(-8px)',
@@ -1624,7 +1643,7 @@ function Component({ config = {} }) {
             </div>
 
             {unifiedEntries.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '48px 40px', color: mutedTextColor, backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border }}>
+              <div style={{ textAlign: 'center', padding: '48px 40px', color: mutedTextColor, ...glassPanel, borderRadius: borderRadius + 'px' }}>
                 Load a manifest JSON to see the unified cross-reference.
               </div>
             )}
@@ -1634,13 +1653,13 @@ function Component({ config = {} }) {
               const pkgCounts = getGroupPkgCounts(group);
               return (
               <div key={gi} style={{
-                backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border, marginBottom: '16px',
-                boxShadow: frameShadow, overflow: 'hidden',
+                ...glassPanel, borderRadius: (borderRadius + 2) + 'px', marginBottom: '16px',
+                overflow: 'hidden',
                 animation: prefersReducedMotion ? 'none' : 'shopifyReveal 400ms ' + shopifyEase + ' both',
                 animationDelay: (gi * 60) + 'ms',
               }}>
                 {/* ─ Group header ─ */}
-                <div style={{ padding: '12px 16px', backgroundColor: '#F1F3F5', borderBottom: '1px solid ' + borderColor }}>
+                <div style={{ padding: '12px 16px', backgroundColor: 'rgba(241,243,245,0.5)', borderBottom: '1px solid rgba(233,236,239,0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '10px', fontWeight: '500', color: secondaryTextColor, textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>
                       {secName}:
@@ -1767,8 +1786,7 @@ function Component({ config = {} }) {
                   </span>
                 </div>
                 <div style={{
-                  backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border, overflow: 'hidden',
-                  boxShadow: frameShadow,
+                  ...glassPanel, borderRadius: (borderRadius + 2) + 'px', overflow: 'hidden',
                   animation: prefersReducedMotion ? 'none' : 'shopifyReveal 500ms ' + shopifyEase + ' both',
                 }}>
                   {unifiedGroups.groups.filter(g => g.entries.length === 1).map((g, i) => {
@@ -1830,8 +1848,7 @@ function Component({ config = {} }) {
                   <span style={{ fontSize: '12px', color: mutedTextColor }}>{unifiedGroups.ungrouped.length} components</span>
                 </div>
                 <div style={{
-                  backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border, overflow: 'hidden',
-                  boxShadow: frameShadow,
+                  ...glassPanel, borderRadius: (borderRadius + 2) + 'px', overflow: 'hidden',
                   animation: prefersReducedMotion ? 'none' : 'shopifyReveal 500ms ' + shopifyEase + ' both',
                 }}>
                   {unifiedGroups.ungrouped.map((e, i) => (
@@ -1910,8 +1927,8 @@ function Component({ config = {} }) {
                 </h3>
                 {groups.map((group, gi) => (
                   <div key={gi} style={{
-                    backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border,
-                    padding: '16px', marginBottom: '10px', boxShadow: frameShadow,
+                    ...glassPanel, borderRadius: (borderRadius + 2) + 'px',
+                    padding: '16px', marginBottom: '10px',
                     animation: prefersReducedMotion ? 'none' : 'shopifyReveal 400ms ' + shopifyEase + ' both',
                     animationDelay: (gi * 50) + 'ms',
                   }}>
@@ -2044,8 +2061,8 @@ function Component({ config = {} }) {
 
         {activeTab === 'manifest' && !manifestEmpty && showPropPanel && (
           <div style={{
-            backgroundColor: surfaceColor, borderRadius: borderRadius + 'px', border: border,
-            padding: '16px', marginBottom: '16px', boxShadow: frameShadow,
+            ...glassPanel, borderRadius: borderRadius + 'px',
+            padding: '16px', marginBottom: '16px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
               <input
@@ -2144,8 +2161,7 @@ function Component({ config = {} }) {
 
         {activeTab === 'manifest' && !manifestEmpty && (
         <div style={{
-          backgroundColor: surfaceColor, borderRadius: (borderRadius + 2) + 'px', border: border, overflow: 'hidden',
-          boxShadow: frameShadow,
+          ...glassPanel, borderRadius: (borderRadius + 2) + 'px', overflow: 'hidden',
           animation: prefersReducedMotion ? 'none' : 'shopifyReveal 500ms ' + shopifyEase + ' both',
         }}>
           <table role="grid" aria-label="Component manifest analysis"
@@ -2190,8 +2206,8 @@ function Component({ config = {} }) {
                   {ReactDOM.createPortal(
                     <div ref={displayNameDDRef} style={{
                       position: 'fixed', top: ddPos.top + 'px', left: ddPos.left + 'px', width: Math.max(ddPos.width, 200) + 'px',
-                      backgroundColor: surfaceColor, border: '1px solid ' + borderColor, borderRadius: '6px',
-                      boxShadow: frameShadow, zIndex: 10000, display: 'flex', flexDirection: 'column',
+                      ...glassPanel, borderRadius: '6px',
+                      zIndex: 10000, display: 'flex', flexDirection: 'column',
                       maxHeight: showDisplayNameDD ? '320px' : '0px', opacity: showDisplayNameDD ? 1 : 0,
                       transform: showDisplayNameDD ? 'translateY(0)' : 'translateY(-6px)',
                       transition: prefersReducedMotion ? 'none' : 'max-height 250ms ' + shopifyEase + ', opacity 180ms ' + shopifyEase + ', transform 200ms ' + shopifyEase,
@@ -2264,15 +2280,15 @@ function Component({ config = {} }) {
                   <React.Fragment key={index}>
                     <tr
                       style={{
-                        backgroundColor: surfaceColor,
+                        backgroundColor: 'transparent',
                         cursor: 'pointer',
                         transition: shopifyTrans,
                         animation: prefersReducedMotion ? 'none' : 'rowStagger 350ms ' + shopifyEase + ' both',
                         animationDelay: prefersReducedMotion ? '0ms' : Math.min(index * 30, 600) + 'ms',
                       }}
                       onClick={() => toggleExpand(comp.id)}
-                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = hoverColor; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = surfaceColor; }}
+                      onMouseEnter={(e) => { if (!prefersReducedMotion) e.currentTarget.style.backgroundColor = 'rgba(241,243,245,0.4)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
                       <td style={{ padding: cellPadding + 'px', borderBottom: border, verticalAlign: 'top' }}>
                         <button
